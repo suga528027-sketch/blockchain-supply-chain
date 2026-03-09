@@ -21,6 +21,7 @@ C:\Users\M S SUGAVANESHWARAN\OneDrive\Desktop\supply\backend\src\main\java\com\s
 C:\Users\M S SUGAVANESHWARAN\OneDrive\Desktop\supply\backend\src\main\java\com\supplychain\backend\repository\PaymentRepository.java
 C:\Users\M S SUGAVANESHWARAN\OneDrive\Desktop\supply\backend\src\main\java\com\supplychain\backend\repository\TrackingEventRepository.java
 C:\Users\M S SUGAVANESHWARAN\OneDrive\Desktop\supply\backend\src\main\java\com\supplychain\backend\repository\UserRepository.java
+C:\Users\M S SUGAVANESHWARAN\OneDrive\Desktop\supply\backend\src\main\java\com\supplychain\backend\security\CorsConfig.java
 C:\Users\M S SUGAVANESHWARAN\OneDrive\Desktop\supply\backend\src\main\java\com\supplychain\backend\security\JwtFilter.java
 C:\Users\M S SUGAVANESHWARAN\OneDrive\Desktop\supply\backend\src\main\java\com\supplychain\backend\security\JwtUtil.java
 C:\Users\M S SUGAVANESHWARAN\OneDrive\Desktop\supply\backend\src\main\java\com\supplychain\backend\security\SecurityConfig.java
