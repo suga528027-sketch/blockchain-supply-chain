@@ -10,4 +10,6 @@ import java.util.List;
 public interface DisputeRepository extends JpaRepository<Dispute, Long> {
     List<Dispute> findByRaisedBy(User raisedBy);
     List<Dispute> findByStatus(String status);
+    List<Dispute> findByBatchId(Long batchId);
+    List<Dispute> findByRaisedById(Long userId);
 }

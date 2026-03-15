@@ -31,6 +31,18 @@ public class Payment {
     @JoinColumn(name = "batch_id", nullable = false)
     private Batch batch;
 
+    @ManyToOne
+    @JoinColumn(name = "request_id")
+    private ProductRequest productRequest;
+
+    @ManyToOne
+    @JoinColumn(name = "payer_id")
+    private User payer;
+
+    @ManyToOne
+    @JoinColumn(name = "receiver_id")
+    private User receiver;
+
     @Column(name = "from_wallet")
     private String fromWallet;
 

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Leaf, Lock, Mail, Eye, EyeOff, User, Phone, MapPin, Shield } from 'lucide-react';
 import { authAPI } from '../../services/api';
+import { useTheme } from '../../context/ThemeContext';
 import { toast } from 'react-toastify';
 
 const Register: React.FC = () => {
@@ -17,6 +18,7 @@ const Register: React.FC = () => {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const { theme } = useTheme();
   const navigate = useNavigate();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -38,12 +40,16 @@ const Register: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0F2027] via-[#203A43] to-[#2C5364] flex items-center justify-center p-4">
+    <div className="min-h-screen bg-slate-50 dark:bg-[var(--bg-color)] flex items-center justify-center p-4 transition-colors duration-500 overflow-hidden relative">
 
       {/* Background decoration */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-green-500 rounded-full mix-blend-multiply filter blur-xl opacity-10 animate-pulse"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-amber-500 rounded-full mix-blend-multiply filter blur-xl opacity-10 animate-pulse"></div>
+       <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className={`absolute -top-40 -right-40 w-80 h-80 rounded-full mix-blend-multiply filter blur-[120px] opacity-20 animate-pulse transition-colors duration-1000 ${
+          theme === 'nature' ? 'bg-emerald-500' : theme === 'midnight' ? 'bg-indigo-500' : 'bg-green-500'
+        }`}></div>
+        <div className={`absolute -bottom-40 -left-40 w-80 h-80 rounded-full mix-blend-multiply filter blur-[120px] opacity-20 animate-pulse transition-colors duration-1000 ${
+          theme === 'nature' ? 'bg-lime-500' : theme === 'midnight' ? 'bg-purple-500' : 'bg-amber-500'
+        }`}></div>
       </div>
 
       <motion.div
@@ -52,7 +58,7 @@ const Register: React.FC = () => {
         transition={{ duration: 0.6 }}
         className="relative w-full max-w-md"
       >
-        <div className="bg-white bg-opacity-5 backdrop-blur-lg rounded-3xl p-8 shadow-2xl border border-white border-opacity-10">
+         <div className="bg-white dark:bg-white dark:bg-opacity-5 backdrop-blur-lg rounded-3xl p-8 shadow-2xl border border-slate-200 dark:border-white dark:border-opacity-10">
 
           {/* Logo */}
           <div className="flex flex-col items-center mb-6">
@@ -64,8 +70,8 @@ const Register: React.FC = () => {
             >
               <Leaf className="w-8 h-8 text-white" />
             </motion.div>
-            <h1 className="text-2xl font-bold text-white">Join AgriChain</h1>
-            <p className="text-gray-400 text-sm mt-1">Create your account</p>
+             <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Join AgriChain</h1>
+            <p className="text-slate-500 dark:text-gray-400 text-sm mt-1">Create your account</p>
           </div>
 
           {/* Security Badge */}
@@ -79,7 +85,7 @@ const Register: React.FC = () => {
 
             {/* Full Name */}
             <div>
-              <label className="text-gray-300 text-sm font-medium mb-2 block">Full Name</label>
+               <label className="text-slate-700 dark:text-gray-300 text-sm font-medium mb-2 block">Full Name</label>
               <div className="relative">
                 <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
@@ -89,14 +95,14 @@ const Register: React.FC = () => {
                   onChange={handleChange}
                   placeholder="Enter your full name"
                   required
-                  className="w-full bg-white bg-opacity-10 border border-white border-opacity-20 rounded-xl py-3 pl-10 pr-4 text-white placeholder-gray-500 focus:outline-none focus:border-green-500 transition-all"
+                  className="w-full bg-slate-50 dark:bg-white dark:bg-opacity-10 border border-slate-200 dark:border-white dark:border-opacity-20 rounded-xl py-3 pl-10 pr-4 text-slate-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-green-500 transition-all shadow-sm"
                 />
               </div>
             </div>
 
             {/* Email */}
             <div>
-              <label className="text-gray-300 text-sm font-medium mb-2 block">Email Address</label>
+               <label className="text-slate-700 dark:text-gray-300 text-sm font-medium mb-2 block">Email Address</label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
@@ -106,14 +112,14 @@ const Register: React.FC = () => {
                   onChange={handleChange}
                   placeholder="Enter your email"
                   required
-                  className="w-full bg-white bg-opacity-10 border border-white border-opacity-20 rounded-xl py-3 pl-10 pr-4 text-white placeholder-gray-500 focus:outline-none focus:border-green-500 transition-all"
+                  className="w-full bg-slate-50 dark:bg-white dark:bg-opacity-10 border border-slate-200 dark:border-white dark:border-opacity-20 rounded-xl py-3 pl-10 pr-4 text-slate-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-green-500 transition-all shadow-sm"
                 />
               </div>
             </div>
 
             {/* Password */}
             <div>
-              <label className="text-gray-300 text-sm font-medium mb-2 block">Password</label>
+               <label className="text-slate-700 dark:text-gray-300 text-sm font-medium mb-2 block">Password</label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
@@ -123,7 +129,7 @@ const Register: React.FC = () => {
                   onChange={handleChange}
                   placeholder="Create a password"
                   required
-                  className="w-full bg-white bg-opacity-10 border border-white border-opacity-20 rounded-xl py-3 pl-10 pr-12 text-white placeholder-gray-500 focus:outline-none focus:border-green-500 transition-all"
+                  className="w-full bg-slate-50 dark:bg-white dark:bg-opacity-10 border border-slate-200 dark:border-white dark:border-opacity-20 rounded-xl py-3 pl-10 pr-12 text-slate-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-green-500 transition-all shadow-sm"
                 />
                 <button
                   type="button"
@@ -137,7 +143,7 @@ const Register: React.FC = () => {
 
             {/* Phone */}
             <div>
-              <label className="text-gray-300 text-sm font-medium mb-2 block">Phone Number</label>
+               <label className="text-slate-700 dark:text-gray-300 text-sm font-medium mb-2 block">Phone Number</label>
               <div className="relative">
                 <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
@@ -146,19 +152,19 @@ const Register: React.FC = () => {
                   value={formData.phone}
                   onChange={handleChange}
                   placeholder="Enter your phone number"
-                  className="w-full bg-white bg-opacity-10 border border-white border-opacity-20 rounded-xl py-3 pl-10 pr-4 text-white placeholder-gray-500 focus:outline-none focus:border-green-500 transition-all"
+                  className="w-full bg-slate-50 dark:bg-white dark:bg-opacity-10 border border-slate-200 dark:border-white dark:border-opacity-20 rounded-xl py-3 pl-10 pr-4 text-slate-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-green-500 transition-all shadow-sm"
                 />
               </div>
             </div>
 
             {/* Role */}
             <div>
-              <label className="text-gray-300 text-sm font-medium mb-2 block">Role</label>
-              <select
+               <label className="text-slate-700 dark:text-gray-300 text-sm font-medium mb-2 block">Role</label>
+               <select
                 name="role"
                 value={formData.role}
                 onChange={handleChange}
-                className="w-full bg-[#1a2f3a] border border-white border-opacity-20 rounded-xl py-3 px-4 text-white focus:outline-none focus:border-green-500 transition-all"
+                className="w-full bg-slate-50 dark:bg-[#1a2f3a] border border-slate-200 dark:border-white dark:border-opacity-20 rounded-xl py-3 px-4 text-slate-900 dark:text-white focus:outline-none focus:border-green-500 transition-all shadow-sm"
               >
                 <option value="FARMER">🌾 Farmer</option>
                 <option value="TRANSPORTER">🚛 Transporter</option>
@@ -169,7 +175,7 @@ const Register: React.FC = () => {
 
             {/* Address */}
             <div>
-              <label className="text-gray-300 text-sm font-medium mb-2 block">Address</label>
+               <label className="text-slate-700 dark:text-gray-300 text-sm font-medium mb-2 block">Address</label>
               <div className="relative">
                 <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
@@ -178,7 +184,7 @@ const Register: React.FC = () => {
                   value={formData.address}
                   onChange={handleChange}
                   placeholder="Enter your address"
-                  className="w-full bg-white bg-opacity-10 border border-white border-opacity-20 rounded-xl py-3 pl-10 pr-4 text-white placeholder-gray-500 focus:outline-none focus:border-green-500 transition-all"
+                  className="w-full bg-slate-50 dark:bg-white dark:bg-opacity-10 border border-slate-200 dark:border-white dark:border-opacity-20 rounded-xl py-3 pl-10 pr-4 text-slate-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-green-500 transition-all shadow-sm"
                 />
               </div>
             </div>

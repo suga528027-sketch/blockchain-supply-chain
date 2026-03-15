@@ -3,47 +3,54 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { ThemeProvider, useTheme } from './context/ThemeContext';
 import Login from './pages/Login/Login';
 import Register from './pages/Register/Register';
 import FarmerDashboard from './pages/FarmerDashboard/FarmerDashboard';
+import ConsumerTracker from './pages/ConsumerTracker/ConsumerTracker';
+import Layout from './components/Layout';
+import AdminDashboard from './pages/AdminDashboard/AdminDashboard';
+import SupplyChainMap from './pages/SupplyChainMap/SupplyChainMap';
+import Notifications from './pages/Notifications/Notifications';
+import Marketplace from './pages/Marketplace/Marketplace';
+import ProductRequests from './pages/ProductRequests/ProductRequests';
+import TransporterDashboard from './pages/TransporterDashboard/TransporterDashboard';
+import RetailerDashboard from './pages/RetailerDashboard/RetailerDashboard';
+import PaymentPage from './pages/Payment/PaymentPage';
+import Profile from './pages/Profile/Profile';
+import Settings from './pages/Settings/Settings';
+import Help from './pages/Help/Help';
+import Market from './pages/Market/Market';
 
-// Protected Route Component
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
-
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0F2027] flex items-center justify-center">
+      <div className="min-h-screen bg-[var(--bg-color)] flex items-center justify-center transition-colors duration-500">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-green-500 border-t-transparent rounded-full animate-spin"></div>
-          <p className="text-white text-lg">Loading AgriChain...</p>
+          <div className="w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-[var(--text-color)] text-lg font-black tracking-tight uppercase opacity-50">Initializing AgriChain...</p>
         </div>
       </div>
     );
   }
-
   return isAuthenticated ? <>{children}</> : <Navigate to="/login" />;
 };
 
-// Role based dashboard redirect
 const DashboardRedirect: React.FC = () => {
   const { user } = useAuth();
-
   switch (user?.role) {
-    case 'FARMER':
-      return <Navigate to="/farmer-dashboard" />;
-    case 'ADMIN':
-      return <Navigate to="/admin-dashboard" />;
-    case 'TRANSPORTER':
-      return <Navigate to="/farmer-dashboard" />;
-    case 'RETAILER':
-      return <Navigate to="/farmer-dashboard" />;
-    default:
-      return <Navigate to="/login" />;
+    case 'FARMER': return <Navigate to="/farmer-dashboard" />;
+    case 'ADMIN': return <Navigate to="/admin-dashboard" />;
+    case 'TRANSPORTER': return <Navigate to="/transporter-dashboard" />;
+    case 'RETAILER': return <Navigate to="/retailer-dashboard" />;
+    case 'CONSUMER': return <Navigate to="/track" />;
+    default: return <Navigate to="/track" />;
   }
 };
 
-function App() {
+const AppContent: React.FC = () => {
+  const { theme } = useTheme();
   return (
     <AuthProvider>
       <Router>
@@ -52,36 +59,132 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
 
-          {/* Protected Routes */}
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <DashboardRedirect />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/farmer-dashboard"
-            element={
-              <ProtectedRoute>
+          {/* Protected Routes with Layout */}
+          <Route path="/dashboard" element={
+            <ProtectedRoute>
+              <DashboardRedirect />
+            </ProtectedRoute>
+          } />
+          <Route path="/map" element={
+            <ProtectedRoute>
+              <Layout>
+                <SupplyChainMap />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/farmer-dashboard" element={
+            <ProtectedRoute>
+              <Layout>
                 <FarmerDashboard />
-              </ProtectedRoute>
-            }
-          />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/farmer-batches" element={
+            <ProtectedRoute>
+              <Layout>
+                <FarmerDashboard />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/admin-dashboard" element={
+            <ProtectedRoute>
+              <Layout>
+                <AdminDashboard initialTab="overview" />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/admin-users" element={
+            <ProtectedRoute>
+              <Layout>
+                <AdminDashboard initialTab="users" />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/admin-batches" element={
+            <ProtectedRoute>
+              <Layout>
+                <AdminDashboard initialTab="batches" />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/track" element={
+            <ProtectedRoute>
+              <Layout>
+                <ConsumerTracker />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/notifications" element={
+            <ProtectedRoute>
+              <Layout>
+                <Notifications />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/market" element={
+            <ProtectedRoute>
+              <Layout>
+                <Market />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/transporter-dashboard" element={
+            <ProtectedRoute>
+              <Layout>
+                <TransporterDashboard />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/retailer-dashboard" element={
+            <ProtectedRoute>
+              <Layout>
+                <RetailerDashboard />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/payment" element={
+            <ProtectedRoute>
+              <Layout>
+                <PaymentPage />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/profile" element={
+            <ProtectedRoute>
+              <Layout>
+                <Profile />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/settings" element={
+            <ProtectedRoute>
+              <Layout>
+                <Settings />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/help" element={
+            <ProtectedRoute>
+              <Layout>
+                <Help />
+              </Layout>
+            </ProtectedRoute>
+          } />
 
-          {/* Default */}
           <Route path="/" element={<Navigate to="/login" />} />
         </Routes>
       </Router>
-      <ToastContainer
-        position="top-right"
-        autoClose={3000}
-        hideProgressBar={false}
-        theme="dark"
-      />
+      <ToastContainer position="top-right" autoClose={3000} theme={theme === 'pink' ? 'light' : 'dark'} />
     </AuthProvider>
+  );
+};
+
+function App() {
+  return (
+    <ThemeProvider>
+      <AppContent />
+    </ThemeProvider>
   );
 }
 
-export default App; 
+export default App;

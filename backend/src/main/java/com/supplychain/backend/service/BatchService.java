@@ -1,5 +1,6 @@
 package com.supplychain.backend.service;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -12,6 +13,9 @@ import com.supplychain.backend.entity.User;
 import com.supplychain.backend.repository.BatchRepository;
 import com.supplychain.backend.repository.TrackingEventRepository;
 import com.supplychain.backend.repository.UserRepository;
+import com.supplychain.backend.repository.PaymentRepository;
+import com.supplychain.backend.repository.DisputeRepository;
+import org.springframework.transaction.annotation.Transactional;
 
 import lombok.RequiredArgsConstructor;
 
@@ -22,6 +26,8 @@ public class BatchService {
     private final BatchRepository batchRepository;
     private final TrackingEventRepository trackingEventRepository;
     private final UserRepository userRepository;
+    private final PaymentRepository paymentRepository;
+    private final DisputeRepository disputeRepository;
 
     // Get all batches
     public List<Batch> getAllBatches() {
@@ -63,7 +69,8 @@ public class BatchService {
         batch.setCurrentOwner(batch.getFarmer());
         Batch savedBatch = batchRepository.save(batch);
 
-        // Record tracking event
+        // Record tracking event with coordinates if available in the batch object 
+        // (we'll check for temporary storage or default to null)
         TrackingEvent event = new TrackingEvent();
         event.setBatch(savedBatch);
         event.setEventType("BATCH_CREATED");
@@ -71,13 +78,34 @@ public class BatchService {
         event.setToUser(batch.getFarmer());
         event.setNotes("Batch created by farmer");
         event.setEventTimestamp(LocalDateTime.now());
+        // For creation, we could try to get coordinates from the farm if linked
+        if (batch.getFarm() != null && batch.getFarm().getLatitude() != null) {
+            event.setLatitude(batch.getFarm().getLatitude());
+            event.setLongitude(batch.getFarm().getLongitude());
+        }
         trackingEventRepository.save(event);
 
         return savedBatch;
     }
 
+    // Update batch
+    public Batch updateBatch(Long id, Batch batchDetails) {
+        Batch batch = batchRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Batch not found!"));
+
+        if (batchDetails.getProductName() != null) batch.setProductName(batchDetails.getProductName());
+        if (batchDetails.getQuantityKg() != null) batch.setQuantityKg(batchDetails.getQuantityKg());
+        if (batchDetails.getPricePerKg() != null) batch.setPricePerKg(batchDetails.getPricePerKg());
+        if (batchDetails.getQualityGrade() != null) batch.setQualityGrade(batchDetails.getQualityGrade());
+        if (batchDetails.getHarvestDate() != null) batch.setHarvestDate(batchDetails.getHarvestDate());
+        if (batchDetails.getExpiryDate() != null) batch.setExpiryDate(batchDetails.getExpiryDate());
+        if (batchDetails.getDescription() != null) batch.setDescription(batchDetails.getDescription());
+
+        return batchRepository.save(batch);
+    }
+
     // Transfer batch ownership
-    public Batch transferOwnership(Long batchId, Long newOwnerId, String location, String notes) {
+    public Batch transferOwnership(Long batchId, Long newOwnerId, String location, String notes, BigDecimal lat, BigDecimal lon) {
         Batch batch = batchRepository.findById(batchId)
                 .orElseThrow(() -> new RuntimeException("Batch not found!"));
         User newOwner = userRepository.findById(newOwnerId)
@@ -96,6 +124,8 @@ public class BatchService {
         event.setToUser(newOwner);
         event.setLocation(location);
         event.setNotes(notes);
+        event.setLatitude(lat);
+        event.setLongitude(lon);
         event.setEventTimestamp(LocalDateTime.now());
         trackingEventRepository.save(event);
 
@@ -103,7 +133,7 @@ public class BatchService {
     }
 
     // Confirm delivery
-    public Batch confirmDelivery(Long batchId, Long retailerId) {
+    public Batch confirmDelivery(Long batchId, Long retailerId, BigDecimal lat, BigDecimal lon) {
         Batch batch = batchRepository.findById(batchId)
                 .orElseThrow(() -> new RuntimeException("Batch not found!"));
         User retailer = userRepository.findById(retailerId)
@@ -118,7 +148,9 @@ public class BatchService {
         event.setEventType("DELIVERED");
         event.setFromUser(batch.getCurrentOwner());
         event.setToUser(retailer);
-        event.setNotes("Delivery confirmed by retailer");
+        event.setNotes("Product delivered and confirmed by retailer");
+        event.setLatitude(lat);
+        event.setLongitude(lon);
         event.setEventTimestamp(LocalDateTime.now());
         trackingEventRepository.save(event);
 
@@ -129,11 +161,25 @@ public class BatchService {
     public List<TrackingEvent> getBatchTrackingHistory(Long batchId) {
         Batch batch = batchRepository.findById(batchId)
                 .orElseThrow(() -> new RuntimeException("Batch not found!"));
-        return trackingEventRepository.findByBatchOrderByEventTimestampAsc(batch);
+        return trackingEventRepository.findByBatchIdOrderByEventTimestampAsc(batch.getId());
     }
 
     // Delete batch
+    @Transactional
     public void deleteBatch(Long id) {
-        batchRepository.deleteById(id);
+        Batch batch = batchRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Batch not found!"));
+
+        // Delete associated tracking events
+        trackingEventRepository.deleteAll(trackingEventRepository.findByBatchId(id));
+
+        // Delete associated payments
+        paymentRepository.deleteAll(paymentRepository.findByBatch(batch));
+
+        // Delete associated disputes
+        disputeRepository.deleteAll(disputeRepository.findByBatchId(id));
+
+        // Delete the batch
+        batchRepository.delete(batch);
     }
 }

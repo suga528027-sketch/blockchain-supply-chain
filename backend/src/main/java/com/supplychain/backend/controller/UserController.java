@@ -7,6 +7,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
@@ -15,16 +17,14 @@ public class UserController {
 
     private final UserService userService;
 
-    // Get all users (Admin only)
+    // Get all users
     @GetMapping
     public ResponseEntity<ApiResponse> getAllUsers() {
         try {
-            return ResponseEntity.ok(
-                new ApiResponse(true, "Success", userService.getAllUsers())
-            );
+            List<User> users = userService.getAllUsers();
+            return ResponseEntity.ok(ApiResponse.success("Users fetched successfully", users));
         } catch (Exception e) {
-            return ResponseEntity.badRequest()
-                .body(new ApiResponse(false, e.getMessage()));
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
         }
     }
 
@@ -32,30 +32,22 @@ public class UserController {
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse> getUserById(@PathVariable Long id) {
         try {
-            User user = userService.getUserById(id)
-                    .orElseThrow(() -> new RuntimeException("User not found!"));
-            return ResponseEntity.ok(
-                new ApiResponse(true, "Success", user)
-            );
+            return userService.getUserById(id)
+                .map(user -> ResponseEntity.ok(ApiResponse.success("User fetched successfully", user)))
+                .orElse(ResponseEntity.status(404).body(ApiResponse.error("User not found")));
         } catch (Exception e) {
-            return ResponseEntity.badRequest()
-                .body(new ApiResponse(false, e.getMessage()));
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
         }
     }
 
     // Update user
     @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse> updateUser(
-            @PathVariable Long id,
-            @RequestBody User updatedUser) {
+    public ResponseEntity<ApiResponse> updateUser(@PathVariable Long id, @RequestBody User updatedUser) {
         try {
             User user = userService.updateUser(id, updatedUser);
-            return ResponseEntity.ok(
-                new ApiResponse(true, "User updated successfully!", user)
-            );
+            return ResponseEntity.ok(ApiResponse.success("User updated successfully", user));
         } catch (Exception e) {
-            return ResponseEntity.badRequest()
-                .body(new ApiResponse(false, e.getMessage()));
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
         }
     }
 
@@ -64,12 +56,31 @@ public class UserController {
     public ResponseEntity<ApiResponse> deleteUser(@PathVariable Long id) {
         try {
             userService.deleteUser(id);
-            return ResponseEntity.ok(
-                new ApiResponse(true, "User deleted successfully!")
-            );
+            return ResponseEntity.ok(ApiResponse.success("User deleted successfully"));
         } catch (Exception e) {
-            return ResponseEntity.badRequest()
-                .body(new ApiResponse(false, e.getMessage()));
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
+        }
+    }
+
+    // Ban user (set isActive = false)
+    @PutMapping("/{id}/ban")
+    public ResponseEntity<ApiResponse> banUser(@PathVariable Long id) {
+        try {
+            User user = userService.banUser(id);
+            return ResponseEntity.ok(ApiResponse.success("User banned successfully", user));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
+        }
+    }
+
+    // Activate user (set isActive = true)
+    @PutMapping("/{id}/activate")
+    public ResponseEntity<ApiResponse> activateUser(@PathVariable Long id) {
+        try {
+            User user = userService.activateUser(id);
+            return ResponseEntity.ok(ApiResponse.success("User activated successfully", user));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
         }
     }
 }

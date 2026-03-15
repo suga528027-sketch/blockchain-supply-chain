@@ -29,6 +29,21 @@ export const authAPI = {
 
   getMe: () =>
     api.get('/auth/me'),
+
+  googleLogin: (idToken: string) =>
+    api.post('/auth/google', { idToken }),
+
+  forgotPassword: (email: string) =>
+    api.post('/auth/forgot-password', { email }),
+
+  resetPassword: (email: string, otp: string, newPassword: string) =>
+    api.post('/auth/reset-password', { email, otp, newPassword }),
+
+  requestDeletion: (email: string) =>
+    api.post('/auth/delete-request', { email }),
+
+  confirmDeletion: (email: string, otp: string) =>
+    api.post('/auth/delete-confirm', { email, otp }),
 };
 
 // Batch APIs
@@ -45,19 +60,30 @@ export const batchAPI = {
   getBatchesByFarmer: (farmerId: number) =>
     api.get(`/batch/farmer/${farmerId}`),
 
+  getBatchesByOwner: (ownerId: number) =>
+    api.get(`/batch/owner/${ownerId}`),
+
   createBatch: (data: any) =>
     api.post('/batch', data),
 
-  transferOwnership: (batchId: number, newOwnerId: number, location: string, notes: string) =>
+  transferOwnership: (batchId: number, newOwnerId: number, location: string, notes: string, lat?: number, lon?: number) =>
     api.put(`/batch/${batchId}/transfer/${newOwnerId}`, null, {
-      params: { location, notes }
+      params: { location, notes, lat, lon }
     }),
 
-  confirmDelivery: (batchId: number, retailerId: number) =>
-    api.put(`/batch/${batchId}/deliver/${retailerId}`),
+  confirmDelivery: (batchId: number, retailerId: number, lat?: number, lon?: number) =>
+    api.put(`/batch/${batchId}/deliver/${retailerId}`, null, {
+      params: { lat, lon }
+    }),
 
   getTrackingHistory: (batchId: number) =>
     api.get(`/batch/${batchId}/history`),
+
+  updateBatch: (id: number, data: any) =>
+    api.put(`/batch/${id}`, data),
+
+  deleteBatch: (id: number) =>
+    api.delete(`/batch/${id}`),
 };
 
 // User APIs
@@ -73,6 +99,12 @@ export const userAPI = {
 
   deleteUser: (id: number) =>
     api.delete(`/users/${id}`),
+
+  banUser: (id: number) =>
+    api.put(`/users/${id}/ban`),
+
+  activateUser: (id: number) =>
+    api.put(`/users/${id}/activate`),
 };
 
 // Farm APIs
@@ -94,6 +126,56 @@ export const farmAPI = {
 
   deleteFarm: (id: number) =>
     api.delete(`/farm/${id}`),
+};
+
+// Notification APIs
+export const notificationAPI = {
+  getNotifications: (userId: number) =>
+    api.get(`/notification/${userId}`),
+
+  markAsRead: (id: number) =>
+    api.put(`/notification/${id}/read`),
+
+  markAllAsRead: (userId: number) =>
+    api.put(`/notification/user/${userId}/read-all`),
+
+  getUnreadCount: (userId: number) =>
+    api.get(`/notification/${userId}/unread-count`),
+};
+
+// Product Request APIs (Marketplace)
+export const productRequestAPI = {
+  createRequest: (data: any) =>
+    api.post('/requests', data),
+
+  getSentRequests: (userId: number) =>
+    api.get(`/requests/sent/${userId}`),
+
+  getReceivedRequests: (userId: number) =>
+    api.get(`/requests/received/${userId}`),
+
+  updateRequestStatus: (id: number, status: string) =>
+    api.put(`/requests/${id}/status`, null, { params: { status } }),
+};
+
+// Analytics & Stats APIs
+export const statsAPI = {
+  getFarmerStats: (id: number) => api.get(`/stats/farmer/${id}`),
+  getTransporterStats: (id: number) => api.get(`/stats/transporter/${id}`),
+  getRetailerStats: (id: number) => api.get(`/stats/retailer/${id}`),
+  getAdminStats: () => api.get('/stats/admin'),
+};
+
+// Payment APIs
+export const paymentAPI = {
+  createPayment: (data: any) =>
+    api.post('/payment', data),
+
+  getPaymentsByUser: (userId: number) =>
+    api.get(`/payment/user/${userId}`),
+
+  confirmPayment: (id: number) =>
+    api.put(`/payment/${id}/confirm`),
 };
 
 export default api;

@@ -9,4 +9,8 @@ import java.util.List;
 @Repository
 public interface PaymentRepository extends JpaRepository<Payment, Long> {
     List<Payment> findByBatch(Batch batch);
+    List<Payment> findByBatchId(Long batchId);
+    List<Payment> findByPayerId(Long userId);
+    List<Payment> findByReceiverId(Long userId);
+    List<Payment> findByPaymentStatus(String paymentStatus);
 }

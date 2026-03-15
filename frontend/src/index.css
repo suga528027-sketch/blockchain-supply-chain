@@ -2,10 +2,79 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
-    Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-  background-color: #0F2027;
-  color: white;
+@layer base {
+  :root {
+    --bg-color: #0F2027;
+    --text-color: #ffffff;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+    --card-bg: rgba(255, 255, 255, 0.05);
+    --border-color: rgba(255, 255, 255, 0.1);
+    --primary-glow: rgba(26, 140, 91, 0.2);
+  }
+
+  /* Default Dark variant remains as fallback if needed */
+  .dark {
+    --bg-color: #0F2027;
+    --text-color: #ffffff;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+    --card-bg: rgba(255, 255, 255, 0.05);
+    --border-color: rgba(255, 255, 255, 0.1);
+    --primary-glow: rgba(26, 140, 91, 0.2);
+  }
+
+  .pink {
+    --bg-color: #f9fafb;
+    --text-color: #111827;
+    --text-secondary: #374151; /* Gray 700 */
+    --text-muted: #6b7280; /* Gray 500 */
+    --card-bg: #ffffff;
+    --border-color: rgba(0, 0, 0, 0.05); /* Subtle professional borders */
+    --primary-glow: rgba(0, 0, 0, 0.02);
+  }
+
+  .nature {
+    --bg-color: #04120b;
+    --text-color: #d1fae5;
+    --text-secondary: #6ee7b7;
+    --text-muted: #10b981;
+    --card-bg: rgba(16, 185, 129, 0.05);
+    --border-color: rgba(16, 185, 129, 0.2);
+    --primary-glow: rgba(16, 185, 129, 0.3);
+  }
+
+  .midnight {
+    --bg-color: #020617;
+    --text-color: #f8fafc;
+    --text-secondary: #a5b4fc;
+    --text-muted: #6366f1;
+    --card-bg: rgba(99, 102, 241, 0.05);
+    --border-color: rgba(99, 102, 241, 0.2);
+    --primary-glow: rgba(99, 102, 241, 0.3);
+  }
+
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
+      Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    transition: background-color 0.5s cubic-bezier(0.4, 0, 0.2, 1), color 0.5s ease;
+  }
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: var(--card-bg);
+  border-radius: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
 }

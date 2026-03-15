@@ -9,12 +9,14 @@ interface User {
   phone: string;
   address: string;
   walletAddress: string;
+  aadhaarNumber: string;
 }
 
 interface AuthContextType {
   user: User | null;
   token: string | null;
   login: (email: string, password: string) => Promise<void>;
+  googleLogin: (idToken: string) => Promise<void>;
   logout: () => void;
   isAuthenticated: boolean;
   loading: boolean;
@@ -39,9 +41,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = async (email: string, password: string) => {
     const response = await authAPI.login(email, password);
-    const { token, email: userEmail, role, fullName, userId } = response.data.data;
-    const userData = { id: userId, fullName, email: userEmail, role,
-      phone: '', address: '', walletAddress: '' };
+    const { token, email: userEmail, role, fullName, userId, aadhaarNumber } = response.data.data;
+    const userData = {
+      id: userId, fullName, email: userEmail, role,
+      phone: '', address: '', walletAddress: '',
+      aadhaarNumber: aadhaarNumber || ''
+    };
+    setToken(token);
+    setUser(userData);
+    localStorage.setItem('token', token);
+    localStorage.setItem('user', JSON.stringify(userData));
+  };
+
+  const googleLogin = async (idToken: string) => {
+    const response = await authAPI.googleLogin(idToken);
+    const { token, email: userEmail, role, fullName, userId, aadhaarNumber } = response.data.data;
+    const userData = { 
+      id: userId, fullName, email: userEmail, role,
+      phone: '', address: '', walletAddress: '',
+      aadhaarNumber: aadhaarNumber || ''
+    };
     setToken(token);
     setUser(userData);
     localStorage.setItem('token', token);
@@ -57,7 +76,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   return (
     <AuthContext.Provider value={{
-      user, token, login, logout,
+      user, token, login, googleLogin, logout,
       isAuthenticated: !!token,
       loading
     }}>

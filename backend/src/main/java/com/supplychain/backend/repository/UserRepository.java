@@ -11,5 +11,6 @@ import com.supplychain.backend.entity.User;
 public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByEmail(String email);
     Optional<User> findByWalletAddress(String walletAddress);
+    Optional<User> findByResetOtp(String resetOtp);
     Boolean existsByEmail(String email);
 }

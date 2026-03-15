@@ -36,6 +36,9 @@ public class Notification {
     @Column(name = "message")
     private String message;
 
+    @Column(name = "type")
+    private String type = "INFO"; // INFO, SUCCESS, WARNING, ERROR
+
     @Column(name = "is_read")
     private Boolean isRead = false;
 

@@ -35,6 +35,14 @@ public class User {
     @Column(name = "wallet_address", unique = true)
     private String walletAddress;
 
+    public void setWalletAddress(String walletAddress) {
+        if (walletAddress == null || walletAddress.trim().isEmpty()) {
+            this.walletAddress = null;
+        } else {
+            this.walletAddress = walletAddress;
+        }
+    }
+
     @Column(name = "aadhaar_number")
     private String aadhaarNumber;
 
@@ -49,6 +57,12 @@ public class User {
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    @Column(name = "reset_otp")
+    private String resetOtp;
+
+    @Column(name = "otp_expiry")
+    private LocalDateTime otpExpiry;
 
     @PrePersist
     protected void onCreate() {
