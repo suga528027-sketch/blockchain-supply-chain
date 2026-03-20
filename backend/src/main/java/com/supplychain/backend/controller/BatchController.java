@@ -8,6 +8,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import com.supplychain.backend.entity.User;
+import com.supplychain.backend.service.UserService;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+
 @RestController
 @RequestMapping("/api/batch")
 @RequiredArgsConstructor
@@ -15,11 +20,13 @@ import org.springframework.web.bind.annotation.*;
 public class BatchController {
 
     private final BatchService batchService;
+    private final UserService userService;
 
-    // Get all batches
+    // Get all batches based on role
     @GetMapping
     public ResponseEntity<ApiResponse> getAllBatches() {
         try {
+            // Return all batches for the Marketplace/Browsing
             return ResponseEntity.ok(
                 new ApiResponse(true, "Success", batchService.getAllBatches())
             );

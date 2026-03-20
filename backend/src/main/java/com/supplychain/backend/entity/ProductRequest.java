@@ -31,6 +31,10 @@ public class ProductRequest {
     @JoinColumn(name = "owner_id", nullable = false)
     private User owner;
 
+    @ManyToOne
+    @JoinColumn(name = "transporter_id")
+    private User transporter;
+
     @Column(name = "quantity_requested", nullable = false)
     private BigDecimal quantityRequested;
 

@@ -2,17 +2,19 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Bell, BellOff, Info, AlertTriangle, CheckCircle,
-  XCircle, CheckCheck, RefreshCw
+  XCircle, CheckCheck, RefreshCw, DollarSign, Truck
 } from 'lucide-react';
 import { toast } from 'react-toastify';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { notificationAPI } from '../../services/api';
+import { notificationAPI, productRequestAPI } from '../../services/api';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Notification {
   id: number;
   message: string;
   type: 'INFO' | 'WARNING' | 'SUCCESS' | 'ERROR';
+  category: 'REQUEST' | 'PAYMENT' | 'LOGISTICS' | 'SYSTEM';
   isRead: boolean;
   createdAt: string;
   user?: { id: number; fullName: string; email: string };
@@ -41,13 +43,25 @@ const typeConfig: Record<
   ERROR:   { icon: <XCircle       className="w-5 h-5" />, color: 'text-red-400',    bg: 'bg-red-500/15',    border: 'border-red-500',    label: 'Error'   },
 };
 
+const categoryConfig: Record<
+  Notification['category'],
+  { icon: React.ReactNode; color: string; label: string }
+> = {
+  REQUEST:   { icon: <RefreshCw   className="w-3.5 h-3.5" />, color: 'text-violet-400', label: 'Trade Request' },
+  PAYMENT:   { icon: <DollarSign className="w-3.5 h-3.5" />, color: 'text-emerald-400', label: 'Financial' },
+  LOGISTICS: { icon: <Truck      className="w-3.5 h-3.5" />, color: 'text-blue-400', label: 'Logistics' },
+  SYSTEM:    { icon: <Info       className="w-3.5 h-3.5" />, color: 'text-gray-400',  label: 'System' },
+};
+
 // ─── Component ────────────────────────────────────────────────────────────────
 const Notifications: React.FC = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading,        setLoading]        = useState(true);
   const [activeFilter,   setActiveFilter]   = useState<'all' | 'unread'>('all');
+  const [categoryFilter, setCategoryFilter] = useState<'ALL' | 'REQUEST' | 'PAYMENT' | 'LOGISTICS' | 'SYSTEM'>('ALL');
   const [markingAll,     setMarkingAll]      = useState(false);
   const [markingId,      setMarkingId]       = useState<number | null>(null);
 
@@ -71,10 +85,34 @@ const Notifications: React.FC = () => {
   }, [fetchNotifications]);
 
   // ─── Derived ────────────────────────────────────────────────────────────────
-  const unreadCount = notifications.filter(n => !n.isRead).length;
-  const displayed   = activeFilter === 'unread'
-    ? notifications.filter(n => !n.isRead)
-    : notifications;
+  const processedNotifications = notifications.map(n => {
+    if (n.category && n.category !== 'SYSTEM') return n;
+    
+    // Fallback logic for legacy or untagged notifications
+    const msg = n.message.toLowerCase();
+    let cat: 'REQUEST' | 'PAYMENT' | 'LOGISTICS' | 'SYSTEM' = (n.category as any) || 'SYSTEM';
+    
+    // Keywords detection
+    if (msg.includes('want to buy') || msg.includes('requested') || msg.includes('trade request')) {
+      cat = 'REQUEST';
+    } else if (msg.includes('payment') || msg.includes('paid') || msg.includes('amount to pay') || msg.includes('financial')) {
+      cat = 'PAYMENT';
+    } else if (msg.includes('shipment') || msg.includes('transporter') || msg.includes('delivering') || msg.includes('logistics') || msg.includes('truck')) {
+      cat = 'LOGISTICS';
+    }
+    
+    return { ...n, category: cat };
+  });
+
+  const unreadCount = processedNotifications.filter(n => !n.isRead).length;
+  
+  const displayed = processedNotifications.filter(n => {
+    // Stage 1: Filter by Read/Unread
+    const statusMatch = activeFilter === 'all' || !n.isRead;
+    // Stage 2: Filter by Category
+    const categoryMatch = categoryFilter === 'ALL' || n.category === categoryFilter;
+    return statusMatch && categoryMatch;
+  });
 
   // ─── Mark single as read ────────────────────────────────────────────────────
   const markAsRead = async (n: Notification) => {
@@ -139,8 +177,8 @@ const Notifications: React.FC = () => {
             )}
           </div>
           <div>
-            <h1 className="text-3xl font-bold text-white">Notifications</h1>
-            <p className="text-gray-400 text-sm">Stay updated with your supply chain</p>
+            <h1 className="text-3xl font-black text-app-text tracking-tight">Notifications</h1>
+            <p className="text-app-text-secondary text-sm font-medium">Stay updated with your supply chain activity</p>
           </div>
         </div>
 
@@ -151,7 +189,7 @@ const Notifications: React.FC = () => {
             whileTap={{ scale: 0.95 }}
             onClick={fetchNotifications}
             title="Refresh"
-            className="p-2.5 rounded-xl bg-app-card border border-app-border text-gray-400 hover:text-white transition-all"
+            className="p-2.5 rounded-xl bg-app-card border border-app-border text-app-text-muted hover:text-emerald-500 transition-all shadow-sm"
           >
             <RefreshCw className="w-4 h-4" />
           </motion.button>
@@ -181,32 +219,69 @@ const Notifications: React.FC = () => {
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.05 }}
-        className="flex gap-2 mb-6"
+        className="flex flex-col gap-4 mb-8"
       >
-        {(['all', 'unread'] as const).map(filter => {
-          const count = filter === 'all' ? notifications.length : unreadCount;
-          const active = activeFilter === filter;
-          return (
-            <motion.button
-              key={filter}
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.97 }}
-              onClick={() => setActiveFilter(filter)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all border ${
-                active
-                  ? 'bg-gradient-to-r from-violet-500 to-purple-600 text-white border-transparent shadow-lg'
-                  : 'bg-app-card text-gray-400 border-app-border hover:text-white'
-              }`}
-            >
-              {filter === 'all' ? 'All' : 'Unread'}
-              <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${
-                active ? 'bg-white/25 text-white' : 'bg-white/5 text-gray-500'
-              }`}>
-                {count}
-              </span>
-            </motion.button>
-          );
-        })}
+        {/* Status Filters */}
+        <div className="flex gap-2">
+          {(['all', 'unread'] as const).map(filter => {
+            const count = filter === 'all' ? notifications.length : unreadCount;
+            const active = activeFilter === filter;
+            return (
+              <motion.button
+                key={filter}
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                onClick={() => setActiveFilter(filter)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all border ${
+                  active
+                    ? 'bg-gradient-to-r from-violet-600 to-purple-600 text-white border-transparent shadow-lg shadow-purple-500/20'
+                    : 'bg-app-card text-app-text-secondary border-app-border hover:text-app-text hover:bg-app-bg'
+                }`}
+              >
+                {filter}
+                <span className={`px-2 py-0.5 rounded-full text-[10px] ${
+                  active ? 'bg-white/25 text-white' : 'bg-white/5 text-gray-500'
+                }`}>
+                  {count}
+                </span>
+              </motion.button>
+            );
+          })}
+        </div>
+
+        {/* Category Filters */}
+        <div className="flex flex-wrap gap-2 pb-2">
+          {(['ALL', 'REQUEST', 'PAYMENT', 'LOGISTICS', 'SYSTEM'] as const).map(cat => {
+            const count = cat === 'ALL' 
+              ? processedNotifications.length 
+              : processedNotifications.filter(n => n.category === cat).length;
+            const active = categoryFilter === cat;
+            
+            if (cat !== 'ALL' && count === 0) return null; // Only show relevant categories
+
+            return (
+              <motion.button
+                key={cat}
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                onClick={() => setCategoryFilter(cat)}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all border-b-2 ${
+                  active
+                    ? 'border-violet-500 bg-violet-500/10 text-violet-400'
+                    : 'border-transparent text-app-text-muted hover:text-app-text'
+                }`}
+              >
+                {cat === 'ALL' && <Bell className="w-3 h-3" />}
+                {cat === 'REQUEST' && <RefreshCw className="w-3 h-3" />}
+                {cat === 'PAYMENT' && <DollarSign className="w-3 h-3" />}
+                {cat === 'LOGISTICS' && <Truck className="w-3 h-3" />}
+                {cat === 'SYSTEM' && <Info className="w-3 h-3" />}
+                {cat}
+                <span className="opacity-40">{count}</span>
+              </motion.button>
+            );
+          })}
+        </div>
       </motion.div>
 
       {/* ── List ── */}
@@ -223,13 +298,13 @@ const Notifications: React.FC = () => {
             <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mb-4 border border-white/10">
               <BellOff className="w-9 h-9 text-gray-600" />
             </div>
-            <p className="text-white text-lg font-semibold mb-1">
+            <p className="text-app-text text-xl font-black mb-2">
               {activeFilter === 'unread' ? 'All caught up!' : 'No notifications yet'}
             </p>
-            <p className="text-gray-500 text-sm">
+            <p className="text-app-text-muted text-sm font-medium">
               {activeFilter === 'unread'
                 ? 'You have no unread notifications.'
-                : "You'll see supply chain updates here."}
+                : "Your system activity logs will appear here."}
             </p>
           </motion.div>
         ) : (
@@ -247,10 +322,10 @@ const Notifications: React.FC = () => {
                   exit={{    opacity: 0, x:  24,  scale: 0.95 }}
                   transition={{ duration: 0.25, delay: index * 0.04 }}
                   onClick={() => markAsRead(notif)}
-                  className={`relative flex items-start gap-4 p-4 rounded-2xl border cursor-pointer group transition-all duration-300 ${
+                  className={`relative flex items-start gap-4 p-5 rounded-[2rem] border cursor-pointer group transition-all duration-500 ${
                     notif.isRead
-                      ? 'bg-app-card border-app-border hover:bg-white/[0.06]'
-                      : 'bg-white/[0.07] border-app-border hover:bg-white/[0.10]'
+                      ? 'bg-app-card border-app-border hover:shadow-lg'
+                      : 'bg-app-card border-emerald-500/20 shadow-xl shadow-black/5'
                   }`}
                 >
                   {/* Unread left-border accent */}
@@ -268,9 +343,79 @@ const Notifications: React.FC = () => {
                   {/* Content */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2">
-                      <p className={`text-sm leading-relaxed ${notif.isRead ? 'text-gray-300' : 'text-white font-medium'}`}>
-                        {notif.message}
+                      <p className={`text-sm leading-relaxed ${notif.isRead ? 'text-app-text-secondary' : 'text-app-text font-black'}`}>
+                        {notif.message.includes('[PAYMENT_LINK:') ? 
+                          notif.message.split('[PAYMENT_LINK:')[0] : 
+                          notif.message
+                        }
                       </p>
+
+                      {/* Payment Action for specific notification types or specific text patterns */}
+                      {(notif.message.includes('[PAYMENT_LINK:') || notif.message.includes('Total amount to pay:')) && (
+                        <div className="mt-4 pb-1">
+                          <motion.button
+                            whileHover={{ scale: 1.02, y: -2 }}
+                            whileTap={{ scale: 0.98 }}
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              let reqId: number | null = null;
+                              
+                              // Strategy 1: Marker
+                              const matches = notif.message.match(/\[PAYMENT_LINK:(\d+)\]/);
+                              if (matches && matches[1]) {
+                                reqId = parseInt(matches[1]);
+                              } 
+                              
+                              // Strategy 2: Fallback - find the most recent accepted request for this user
+                              if (!reqId) {
+                                try {
+                                  toast.info('Analyzing transmission context...');
+                                  const res = await productRequestAPI.getSentRequests(user?.id!);
+                                  const sent = res.data.data || [];
+                                  // Find an accepted request for the product mentioned in the message
+                                  const request = sent.find((r: any) => 
+                                    r.status === 'ACCEPTED' && 
+                                    !r.isPaid && 
+                                    notif.message.toLowerCase().includes(r.batch.productName.toLowerCase())
+                                  );
+                                  if (request) reqId = request.id;
+                                } catch (err) {
+                                  console.error("Failed to recover request context", err);
+                                }
+                              }
+
+                              if (reqId) {
+                                try {
+                                  const res = await productRequestAPI.getRequestById(reqId);
+                                  const targetReq = res.data.data;
+                                  if (targetReq && targetReq.batch && targetReq.totalPrice) {
+                                  navigate('/payments', { 
+                                    state: { 
+                                      batch: targetReq.batch, 
+                                      amount: targetReq.totalPrice, 
+                                      requestId: targetReq.id,
+                                      quantity: targetReq.quantityRequested
+                                    } 
+                                  });
+                                    toast.success('System redirect: Settlement Hub accessed.');
+                                  } else {
+                                    toast.error('Financial endpoint not reached.');
+                                  }
+                                } catch {
+                                  toast.error('Transmission failure.');
+                                }
+                              } else {
+                                toast.warning('Target context not found. Redirecting to Trade Hub.');
+                                navigate('/market', { state: { activeTab: 'requests' }});
+                              }
+                            }}
+                            className="flex items-center gap-3 px-6 py-3 bg-emerald-500 text-white rounded-[1.2rem] text-xs font-black shadow-lg shadow-emerald-500/30 hover:bg-emerald-400 transition-all border border-emerald-400/20 group"
+                          >
+                            <DollarSign className="w-4 h-4 group-hover:rotate-12 transition-transform" />
+                            Confirm Payment & Release Harvest
+                          </motion.button>
+                        </div>
+                      )}
 
                       {/* Mark as read button (visible on hover when unread) */}
                       {!notif.isRead && (
@@ -279,11 +424,11 @@ const Notifications: React.FC = () => {
                           whileTap={{ scale: 0.9 }}
                           onClick={e => { e.stopPropagation(); markAsRead(notif); }}
                           title="Mark as read"
-                          className="flex-shrink-0 p-1.5 rounded-lg text-gray-500 hover:text-green-400 hover:bg-green-500/10 transition-all opacity-0 group-hover:opacity-100"
+                          className="flex-shrink-0 p-2 rounded-xl text-app-text-muted hover:text-emerald-500 hover:bg-emerald-500/10 transition-all opacity-0 group-hover:opacity-100 border border-transparent hover:border-emerald-500/20"
                         >
                           {isMarking
-                            ? <div className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                            : <CheckCheck className="w-3.5 h-3.5" />
+                            ? <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                            : <CheckCheck className="w-4 h-4" />
                           }
                         </motion.button>
                       )}
@@ -296,7 +441,17 @@ const Notifications: React.FC = () => {
                       </span>
 
                       {/* Time */}
-                      <span className="text-gray-500 text-xs">{timeAgo(notif.createdAt)}</span>
+                      <span className="text-app-text-muted text-xs font-semibold">{timeAgo(notif.createdAt)}</span>
+
+                      {/* Category Badge */}
+                      {notif.category && (
+                        <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-black/20 ${categoryConfig[notif.category]?.color}`}>
+                          {categoryConfig[notif.category]?.icon}
+                          <span className="text-[9px] font-black uppercase tracking-tighter">
+                            {categoryConfig[notif.category]?.label}
+                          </span>
+                        </div>
+                      )}
 
                       {/* Unread dot */}
                       {!notif.isRead && (
@@ -320,10 +475,10 @@ const Notifications: React.FC = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3 }}
-          className="text-center text-gray-600 text-xs mt-6"
+          className="text-center text-app-text-muted text-xs mt-8 font-bold uppercase tracking-widest opacity-60"
         >
-          Showing {displayed.length} notification{displayed.length !== 1 ? 's' : ''}
-          {unreadCount > 0 && <> · <span className="text-violet-400">{unreadCount} unread</span></>}
+          Showing {displayed.length} frequency log{displayed.length !== 1 ? 's' : ''}
+          {unreadCount > 0 && <> · <span className="text-violet-600">{unreadCount} active</span></>}
         </motion.p>
       )}
     </div>

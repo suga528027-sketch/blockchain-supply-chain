@@ -25,13 +25,13 @@
   }
 
   .pink {
-    --bg-color: #f9fafb;
-    --text-color: #111827;
-    --text-secondary: #374151; /* Gray 700 */
-    --text-muted: #6b7280; /* Gray 500 */
+    --bg-color: #fafbfc;
+    --text-color: #1a1a1a;
+    --text-secondary: #4b5563; 
+    --text-muted: #9ca3af;
     --card-bg: #ffffff;
-    --border-color: rgba(0, 0, 0, 0.05); /* Subtle professional borders */
-    --primary-glow: rgba(0, 0, 0, 0.02);
+    --border-color: rgba(0, 0, 0, 0.04);
+    --primary-glow: rgba(16, 185, 129, 0.05);
   }
 
   .nature {

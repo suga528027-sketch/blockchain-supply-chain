@@ -275,10 +275,10 @@ const SupplyChainMap: React.FC = () => {
             style={{ height: '100%', width: '100%', minHeight: '400px' }}
             scrollWheelZoom={true}
           >
-            {/* OpenStreetMap Tiles (Free, No API Key) */}
+            {/* Google Maps Roadmap Tiles (Premium Aesthetic) */}
             <TileLayer
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              attribution='&copy; Google Maps'
+              url="https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}"
             />
             
             <AnimatePresence>
@@ -292,7 +292,7 @@ const SupplyChainMap: React.FC = () => {
                   <Marker 
                     key={event.id} 
                     position={position}
-                    icon={createSvgIcon(pinColor)}
+                    icon={createSvgIcon(event.eventType === 'BATCH_CREATED' ? '#10b981' : event.eventType === 'DELIVERED' ? '#ef4444' : '#4285F4')}
                   >
                     <Popup className="custom-popup">
                       <div className="text-slate-800 p-1">
@@ -314,11 +314,11 @@ const SupplyChainMap: React.FC = () => {
               <Polyline 
                 positions={routePoints} 
                 pathOptions={{ 
-                  color: '#F4A300', 
-                  weight: 4, 
-                  opacity: 0.7, 
-                  dashArray: '10, 10', 
-                  lineCap: 'round'
+                  color: '#4285F4', // Google Blue
+                  weight: 6, 
+                  opacity: 0.8, 
+                  lineCap: 'round',
+                  lineJoin: 'round'
                 }} 
               />
             )}

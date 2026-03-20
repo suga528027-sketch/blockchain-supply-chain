@@ -7,14 +7,25 @@ import reportWebVitals from './reportWebVitals';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 
 // Suppress MetaMask extension errors from crashing the UI
-window.addEventListener('unhandledrejection', (event) => {
-  if (event.reason && (
-    (typeof event.reason.message === 'string' && event.reason.message.includes('MetaMask')) || 
-    (typeof event.reason.stack === 'string' && event.reason.stack.includes('nkbihfbeogaeaoehlefnkodbefgpgknn'))
-  )) {
+const suppressMetaMaskErrors = (event: any) => {
+  const isMetaMaskError = 
+    (event.reason && (
+      (typeof event.reason.message === 'string' && event.reason.message.includes('MetaMask')) || 
+      (typeof event.reason.stack === 'string' && event.reason.stack.includes('nkbihfbeogaeaoehlefnkodbefgpgknn'))
+    )) ||
+    (event.message && (
+      (typeof event.message === 'string' && event.message.includes('MetaMask')) ||
+      (event.error && event.error.stack && event.error.stack.includes('nkbihfbeogaeaoehlefnkodbefgpgknn'))
+    ));
+
+  if (isMetaMaskError) {
     event.preventDefault();
+    event.stopPropagation();
   }
-});
+};
+
+window.addEventListener('unhandledrejection', suppressMetaMaskErrors);
+window.addEventListener('error', suppressMetaMaskErrors, true);
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement

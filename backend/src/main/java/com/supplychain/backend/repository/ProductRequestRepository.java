@@ -9,4 +9,5 @@ import java.util.List;
 public interface ProductRequestRepository extends JpaRepository<ProductRequest, Long> {
     List<ProductRequest> findByRequesterId(Long requesterId);
     List<ProductRequest> findByOwnerId(Long ownerId);
+    List<ProductRequest> findByTransporterId(Long transporterId);
 }

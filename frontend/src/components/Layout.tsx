@@ -18,7 +18,14 @@ import {
   Bell,
   ShoppingCart,
   Inbox,
-  CreditCard
+  CreditCard,
+  Truck,
+  Store,
+  AlertTriangle,
+  DollarSign,
+  QrCode,
+  PackageCheck,
+  MessageSquare
 } from 'lucide-react';
 
 import { useAuth } from '../context/AuthContext';
@@ -50,7 +57,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   }, [user?.id]);
 
   const menuItems = [
-    // FARMER
+    // ── FARMER ──────────────────────────────────────────────────────────────
     {
       title: 'My Dashboard',
       icon: <LayoutDashboard className="w-5 h-5" />,
@@ -60,27 +67,95 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     {
       title: 'My Batches',
       icon: <Package className="w-5 h-5" />,
-      path: '/farmer-batches',
+      path: '/farmer-dashboard',
+      roles: ['FARMER'],
+    },
+    {
+      title: 'Track Produce',
+      icon: <Search className="w-5 h-5" />,
+      path: '/track',
+      roles: ['FARMER'],
+    },
+    {
+      title: 'My Payments',
+      icon: <CreditCard className="w-5 h-5" />,
+      path: '/payments',
+      roles: ['FARMER'],
+    },
+    {
+      title: 'My Disputes',
+      icon: <AlertTriangle className="w-5 h-5" />,
+      path: '/disputes',
       roles: ['FARMER'],
     },
 
-    // TRANSPORTER
+    // ── TRANSPORTER ─────────────────────────────────────────────────────────
     {
       title: 'My Dashboard',
       icon: <LayoutDashboard className="w-5 h-5" />,
       path: '/transporter-dashboard',
       roles: ['TRANSPORTER'],
     },
+    {
+      title: 'Assigned Batches',
+      icon: <PackageCheck className="w-5 h-5" />,
+      path: '/transporter-dashboard',
+      roles: ['TRANSPORTER'],
+    },
+    {
+      title: 'Update Location',
+      icon: <MapPin className="w-5 h-5" />,
+      path: '/transporter-dashboard',
+      roles: ['TRANSPORTER'],
+    },
+    {
+      title: 'My Earnings',
+      icon: <DollarSign className="w-5 h-5" />,
+      path: '/payments',
+      roles: ['TRANSPORTER'],
+    },
 
-    // RETAILER
+    // ── RETAILER ────────────────────────────────────────────────────────────
     {
       title: 'My Dashboard',
       icon: <LayoutDashboard className="w-5 h-5" />,
       path: '/retailer-dashboard',
       roles: ['RETAILER'],
     },
+    {
+      title: 'Received Batches',
+      icon: <Inbox className="w-5 h-5" />,
+      path: '/retailer-dashboard',
+      roles: ['RETAILER'],
+    },
+    {
+      title: 'Make Payment',
+      icon: <CreditCard className="w-5 h-5" />,
+      path: '/payments',
+      roles: ['RETAILER'],
+    },
+    {
+      title: 'Track Produce',
+      icon: <Search className="w-5 h-5" />,
+      path: '/track',
+      roles: ['RETAILER'],
+    },
 
-    // ADMIN
+    // ── CONSUMER ────────────────────────────────────────────────────────────
+    {
+      title: 'Track Produce',
+      icon: <Search className="w-5 h-5" />,
+      path: '/track',
+      roles: ['CONSUMER'],
+    },
+    {
+      title: 'My Signals',
+      icon: <MessageSquare className="w-5 h-5" />,
+      path: '/my-signals',
+      roles: ['CONSUMER'],
+    },
+
+    // ── ADMIN ────────────────────────────────────────────────────────────────
     {
       title: 'Admin Dashboard',
       icon: <LayoutDashboard className="w-5 h-5" />,
@@ -99,31 +174,23 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       path: '/admin-batches',
       roles: ['ADMIN'],
     },
-
-    // COMMON FOR MANY ROLES
     {
-      title: 'Supply Chain Map',
-      icon: <MapPin className="w-5 h-5" />,
-      path: '/map',
-      roles: ['FARMER', 'TRANSPORTER', 'RETAILER', 'ADMIN'],
-    },
-    {
-      title: 'Market',
-      icon: <ShoppingCart className="w-5 h-5" />,
-      path: '/market',
-      roles: ['FARMER', 'TRANSPORTER', 'RETAILER', 'ADMIN', 'CONSUMER'],
-    },
-    {
-      title: 'Track Produce',
-      icon: <Search className="w-5 h-5" />,
-      path: '/track',
-      roles: ['FARMER', 'TRANSPORTER', 'RETAILER', 'ADMIN', 'CONSUMER'],
-    },
-    {
-      title: 'Payments',
+      title: 'All Payments',
       icon: <CreditCard className="w-5 h-5" />,
-      path: '/payment',
-      roles: ['FARMER', 'TRANSPORTER', 'RETAILER'],
+      path: '/admin-payments',
+      roles: ['ADMIN'],
+    },
+    {
+      title: 'All Disputes',
+      icon: <AlertTriangle className="w-5 h-5" />,
+      path: '/admin-disputes',
+      roles: ['ADMIN'],
+    },
+    {
+      title: 'Consumer Signals',
+      icon: <MessageSquare className="w-5 h-5" />,
+      path: '/admin-feedback',
+      roles: ['ADMIN'],
     },
   ];
 
@@ -138,7 +205,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       <motion.div
         animate={{ width: sidebarOpen ? 260 : 80 }}
         transition={{ duration: 0.3 }}
-        className="bg-app-card backdrop-blur-3xl border-r border-app-border flex flex-col h-screen sticky top-0 shadow-2xl transition-all duration-500 z-50"
+        className="bg-app-card backdrop-blur-3xl border-r border-app-border flex flex-col h-screen sticky top-0 shadow-[20px_0_50px_-20px_rgba(0,0,0,0.05)] transition-all duration-500 z-50"
       >
         {/* Logo */}
         <div className="p-6 flex items-center gap-4 border-b border-app-border">
@@ -158,6 +225,29 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
           )}
         </div>
 
+        {/* Role Badge */}
+        {sidebarOpen && user?.role && (
+          <div className="px-6 py-3 border-b border-app-border">
+            <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest w-full justify-center
+              ${user.role === 'FARMER'      ? 'bg-green-500/15 text-green-500 border border-green-500/30' : ''}
+              ${user.role === 'TRANSPORTER' ? 'bg-blue-500/15 text-blue-500 border border-blue-500/30' : ''}
+              ${user.role === 'RETAILER'    ? 'bg-orange-500/15 text-orange-500 border border-orange-500/30' : ''}
+              ${user.role === 'CONSUMER'    ? 'bg-purple-500/15 text-purple-500 border border-purple-500/30' : ''}
+              ${user.role === 'ADMIN'       ? 'bg-red-500/15 text-red-500 border border-red-500/30' : ''}
+            `}>
+              <div className={`w-1.5 h-1.5 rounded-full animate-pulse
+                ${user.role === 'FARMER'      ? 'bg-green-500' : ''}
+                ${user.role === 'TRANSPORTER' ? 'bg-blue-500' : ''}
+                ${user.role === 'RETAILER'    ? 'bg-orange-500' : ''}
+                ${user.role === 'CONSUMER'    ? 'bg-purple-500' : ''}
+                ${user.role === 'ADMIN'       ? 'bg-red-500' : ''}
+              `} />
+              {user.role}
+            </div>
+          </div>
+        )}
+
+
         {/* Menu */}
         <div className="flex-1 p-4 space-y-2 overflow-y-auto overflow-x-hidden custom-scrollbar">
           {filteredMenu.map((item, index) => {
@@ -172,8 +262,8 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                 onClick={() => navigate(item.path)}
                 className={`w-full flex items-center gap-4 px-4 py-4 rounded-2xl transition-all group ${
                   isActive
-                    ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-lg shadow-emerald-500/5'
-                    : 'text-app-text-secondary hover:bg-white/5 hover:text-emerald-400'
+                    ? 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 shadow-lg shadow-emerald-500/5'
+                    : 'text-app-text-secondary hover:bg-app-bg hover:text-emerald-500'
                 }`}
               >
                 <div className={`relative flex-shrink-0 transition-colors ${isActive ? 'text-emerald-400' : 'group-hover:text-emerald-400'}`}>
@@ -228,7 +318,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
             <motion.button
               whileHover={{ scale: 1.1, rotate: 180 }}
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-white/5 text-app-text-secondary hover:text-emerald-400 transition-all border border-app-border"
+              className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-app-bg text-app-text-secondary hover:text-emerald-500 transition-all border border-app-border"
             >
               <Menu className="w-6 h-6" />
             </motion.button>
@@ -249,7 +339,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         </header>
 
         {/* Content Container (Scrollable) */}
-        <main className="flex-1 overflow-y-auto overflow-x-hidden p-8 bg-[radial-gradient(circle_at_top_right,rgba(16,185,129,0.03),transparent_50%)]">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden p-8 bg-app-bg">
            <div className="max-w-7xl mx-auto">
              {children}
            </div>

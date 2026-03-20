@@ -35,7 +35,27 @@ public class SecurityConfig {
             .sessionManagement(session -> session
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/**").permitAll()
+                // Allow public endpoints
+                .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers("/api/batch/track/**").permitAll()
+                .requestMatchers("/api/users/initiate-forgot-password").permitAll()
+                .requestMatchers("/api/users/reset-password").permitAll()
+                .requestMatchers("/api/users/google-login").permitAll()
+                .requestMatchers("/api/users/register").permitAll()
+
+                // Role-based restrictions
+                .requestMatchers("/api/batch/create", "/api/farm/**").hasRole("FARMER")
+                .requestMatchers("/api/transport/**").hasRole("TRANSPORTER")
+                .requestMatchers("/api/retail/**").hasRole("RETAILER")
+                .requestMatchers("/api/consumer/**").hasRole("CONSUMER")
+                
+                // Admin has full access to the above and admin specific ones
+                .requestMatchers("/api/admin/**").hasRole("ADMIN")
+
+                // Feedback roles
+                .requestMatchers("/api/feedback/submit", "/api/feedback/consumer/**").hasRole("CONSUMER")
+                .requestMatchers("/api/feedback/pending", "/api/feedback/review").hasRole("ADMIN")
+                
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);

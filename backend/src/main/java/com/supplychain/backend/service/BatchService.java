@@ -157,6 +157,18 @@ public class BatchService {
         return updatedBatch;
     }
 
+    // Add a custom tracking event
+    public void addEvent(Batch batch, String type, String notes, User from, User to) {
+        TrackingEvent event = new TrackingEvent();
+        event.setBatch(batch);
+        event.setEventType(type);
+        event.setNotes(notes);
+        event.setFromUser(from);
+        event.setToUser(to);
+        event.setEventTimestamp(LocalDateTime.now());
+        trackingEventRepository.save(event);
+    }
+
     // Get tracking history of a batch
     public List<TrackingEvent> getBatchTrackingHistory(Long batchId) {
         Batch batch = batchRepository.findById(batchId)

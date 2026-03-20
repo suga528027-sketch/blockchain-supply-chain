@@ -114,7 +114,7 @@ const UserProfile: React.FC<{ unreadCount: number }> = ({ unreadCount }) => {
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
           onClick={() => navigate('/notifications')}
-          className="relative p-2.5 rounded-2xl bg-white/5 backdrop-blur-md border border-white/10 text-slate-400 hover:text-white transition-all shadow-lg group"
+          className="relative p-2.5 rounded-2xl bg-app-card backdrop-blur-md border border-app-border text-app-text-secondary hover:text-emerald-500 transition-all shadow-lg group"
         >
           <Bell className="w-5 h-5 group-hover:rotate-12 transition-transform" />
           {unreadCount > 0 && (
@@ -127,16 +127,16 @@ const UserProfile: React.FC<{ unreadCount: number }> = ({ unreadCount }) => {
         {/* Profile Trigger */}
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="flex items-center gap-3 p-1.5 pr-4 rounded-3xl bg-white/5 backdrop-blur-md border border-white/10 hover:border-emerald-500/30 transition-all shadow-xl group"
+          className="flex items-center gap-3 p-1.5 pr-4 rounded-3xl bg-app-card backdrop-blur-md border border-app-border hover:border-emerald-500/30 transition-all shadow-xl group"
         >
           <div className="relative">
             <motion.div 
               whileHover={{ scale: 1.05 }}
-              className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-400 to-indigo-600 flex items-center justify-center border-2 border-white/10 shadow-[0_0_15px_rgba(16,185,129,0.2)] overflow-hidden"
+              className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-400 to-indigo-600 flex items-center justify-center border-2 border-app-border/10 shadow-[0_0_15px_rgba(16,185,129,0.2)] overflow-hidden"
             >
                <User className="w-5 h-5 text-white" />
             </motion.div>
-            <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-[#020617] shadow-sm"></span>
+            <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-app-card shadow-sm"></span>
           </div>
 
           <div className="hidden md:block text-left">
@@ -159,10 +159,9 @@ const UserProfile: React.FC<{ unreadCount: number }> = ({ unreadCount }) => {
               initial={{ opacity: 0, y: 15, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 15, scale: 0.95 }}
-              className="absolute top-full right-0 mt-4 w-72 bg-[#0a0f1e]/90 backdrop-blur-2xl border border-white/10 rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden z-[100]"
+              className="absolute top-full right-0 mt-4 w-72 bg-app-card backdrop-blur-2xl border border-app-border rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.15)] overflow-hidden z-[100]"
             >
-              {/* Header / Stats Overlay */}
-              <div className="p-6 bg-gradient-to-br from-emerald-500/10 to-transparent border-b border-white/5">
+              <div className="p-6 bg-gradient-to-br from-emerald-500/10 to-transparent border-b border-app-border/5">
                 <div className="flex items-center gap-4 mb-6">
                   <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-400 to-indigo-600 flex items-center justify-center shadow-2xl">
                       <User className="w-7 h-7 text-white" />
@@ -175,16 +174,16 @@ const UserProfile: React.FC<{ unreadCount: number }> = ({ unreadCount }) => {
 
                 {/* Quick Stats */}
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="p-3 rounded-2xl bg-white/5 border border-white/5">
+                  <div className="p-3 rounded-2xl bg-app-bg/50 border border-app-border/5">
                     <div className="flex items-center gap-2 mb-1">
-                      <Zap className="w-3 h-3 text-emerald-400" />
+                      <Zap className="w-3 h-3 text-emerald-500" />
                       <span className="text-app-text font-black text-xs">5 Active</span>
                     </div>
                     <p className="text-[10px] text-app-text-muted font-bold uppercase tracking-wider">Shipments</p>
                   </div>
-                  <div className="p-3 rounded-2xl bg-white/5 border border-white/5">
+                  <div className="p-3 rounded-2xl bg-app-bg/50 border border-app-border/5">
                     <div className="flex items-center gap-2 mb-1">
-                      <CheckCircle className="w-3 h-3 text-cyan-400" />
+                      <CheckCircle className="w-3 h-3 text-cyan-500" />
                       <span className="text-app-text font-black text-xs">12 Ready</span>
                     </div>
                     <p className="text-[10px] text-app-text-muted font-bold uppercase tracking-wider">Completed</p>
@@ -196,38 +195,38 @@ const UserProfile: React.FC<{ unreadCount: number }> = ({ unreadCount }) => {
               <div className="p-2">
                 <button 
                   onClick={() => handleNavigate('/profile')}
-                  className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-app-text-secondary hover:text-app-text hover:bg-white/5 transition-all group"
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-app-text-secondary hover:text-emerald-500 hover:bg-app-bg transition-all group"
                 >
-                  <UserCircle className="w-5 h-5 group-hover:text-emerald-400 transition-colors" />
+                  <UserCircle className="w-5 h-5 group-hover:text-emerald-500 transition-colors" />
                   <span className="text-sm font-bold">View Profile</span>
                 </button>
                 <button 
                   onClick={() => handleNavigate('/settings')}
-                  className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-app-text-secondary hover:text-app-text hover:bg-white/5 transition-all group"
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-app-text-secondary hover:text-cyan-500 hover:bg-app-bg transition-all group"
                 >
                   <Settings className="w-5 h-5 group-hover:text-cyan-400 transition-colors" />
                   <span className="text-sm font-bold">Account Settings</span>
                 </button>
                 <button 
                   onClick={() => handleNavigate('/help')}
-                  className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-app-text-secondary hover:text-app-text hover:bg-white/5 transition-all group"
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-app-text-secondary hover:text-indigo-500 hover:bg-app-bg transition-all group"
                 >
                   <HelpCircle className="w-5 h-5 group-hover:text-indigo-400 transition-colors" />
                   <span className="text-sm font-bold">Help & Support</span>
                 </button>
                 
-                <div className="my-2 border-t border-white/5"></div>
+                <div className="my-2 border-t border-app-border/5"></div>
 
                 {/* Theme Switcher in Dropdown */}
                 <button 
                   onClick={toggleTheme}
-                  className="w-full flex items-center justify-between px-4 py-3 rounded-2xl text-slate-400 hover:text-white hover:bg-white/5 transition-all group"
+                  className="w-full flex items-center justify-between px-4 py-3 rounded-2xl text-app-text-secondary hover:text-app-text hover:bg-app-bg transition-all group"
                 >
                   <div className="flex items-center gap-3">
                     {getThemeIcon()}
                     <span className="text-sm font-bold uppercase tracking-widest">{theme} Theme</span>
                   </div>
-                  <div className="w-8 h-4 bg-white/10 rounded-full relative p-0.5">
+                  <div className="w-8 h-4 bg-app-bg rounded-full relative p-0.5 border border-app-border">
                      <motion.div 
                        animate={{ x: theme === 'midnight' || theme === 'dark' || theme === 'nature' ? 16 : 0 }}
                        className="w-3 h-3 bg-emerald-400 rounded-full"
@@ -237,7 +236,7 @@ const UserProfile: React.FC<{ unreadCount: number }> = ({ unreadCount }) => {
 
                 <button 
                   onClick={logout}
-                  className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-app-text-secondary hover:text-app-text hover:bg-white/5 transition-all group"
+                  className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-app-text-secondary hover:text-rose-500 hover:bg-app-bg transition-all group"
                 >
                   <LogOut className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
                   <span className="text-sm font-black uppercase tracking-widest">Logout System</span>
@@ -253,9 +252,9 @@ const UserProfile: React.FC<{ unreadCount: number }> = ({ unreadCount }) => {
               </div>
 
               {/* Footer */}
-              <div className="p-4 bg-black/20 text-center flex items-center justify-center gap-2">
-                 <Clock className="w-3 h-3 text-slate-600" />
-                 <span className="text-[10px] text-slate-600 font-bold uppercase tracking-tighter">Last Login: Oct 24, 14:32</span>
+              <div className="p-4 bg-app-bg/50 text-center flex items-center justify-center gap-2">
+                 <Clock className="w-3 h-3 text-app-text-muted opacity-50" />
+                 <span className="text-[10px] text-app-text-muted font-bold uppercase tracking-tighter opacity-50">Last Login Instance Verified</span>
               </div>
             </motion.div>
           )}
@@ -275,26 +274,26 @@ const UserProfile: React.FC<{ unreadCount: number }> = ({ unreadCount }) => {
             />
             
             <motion.div
-              initial={{ scale: 0.9, opacity: 0, y: 20 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              className="relative w-full max-w-md bg-[#0a0f1e] border border-white/10 rounded-[2.5rem] p-8 shadow-2xl overflow-hidden"
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="relative w-full max-w-md bg-app-card border border-app-border rounded-[3rem] p-10 shadow-2xl overflow-hidden"
             >
               {/* Background Glow */}
               <div className="absolute top-0 right-0 w-32 h-32 bg-red-500/10 blur-[50px]"></div>
               
               <div className="flex justify-between items-start mb-6">
-                 <div className="w-12 h-12 bg-red-500/20 rounded-2xl flex items-center justify-center border border-red-500/30">
-                    <AlertTriangle className="w-6 h-6 text-red-500" />
-                 </div>
-                 <button onClick={() => setShowDeleteModal(false)} className="text-slate-500 hover:text-white transition-colors">
-                    <X className="w-6 h-6" />
-                 </button>
+                  <div className="w-14 h-14 bg-red-500/10 rounded-2xl flex items-center justify-center border border-red-500/20">
+                    <AlertTriangle className="w-7 h-7 text-red-500" />
+                  </div>
+                  <button onClick={() => setShowDeleteModal(false)} className="text-app-text-muted hover:text-app-text transition-colors">
+                    <X className="w-7 h-7" />
+                  </button>
               </div>
 
-              <h3 className="text-2xl font-black text-white mb-2">Delete Account?</h3>
-              <p className="text-slate-400 text-sm mb-8">
-                This action is permanent and cannot be undone. All your node data, batches, and history will be cleared from the ledger.
+              <h3 className="text-3xl font-black text-app-text mb-2 tracking-tighter">Delete Identity?</h3>
+              <p className="text-app-text-secondary text-sm mb-10 font-medium">
+                This action is permanent and cannot be undone. All your node data, batches, and history will be cleared from the distributed ledger.
               </p>
 
               {!otpSent ? (
@@ -315,9 +314,9 @@ const UserProfile: React.FC<{ unreadCount: number }> = ({ unreadCount }) => {
                       value={deleteOtp}
                       onChange={(e) => setDeleteOtp(e.target.value.replace(/\D/g,''))}
                       placeholder="000000"
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 text-center text-3xl font-black tracking-[1em] text-white focus:outline-none focus:border-red-500/50 transition-all"
+                      className="w-full bg-app-bg border border-app-border rounded-2xl py-5 text-center text-3xl font-black tracking-[1em] text-app-text focus:outline-none focus:border-red-500/50 transition-all placeholder:text-app-text-muted/20"
                     />
-                    <p className="text-[10px] text-slate-500 italic">Code sent to: {user?.email}</p>
+                    <p className="text-[10px] text-app-text-muted font-bold tracking-tight italic">Verification code sent to system alias</p>
                   </div>
                   
                   <button

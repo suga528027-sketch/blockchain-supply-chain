@@ -7,6 +7,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import com.supplychain.backend.entity.User;
+import com.supplychain.backend.service.UserService;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/payment")
 @RequiredArgsConstructor
@@ -14,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 public class PaymentController {
 
     private final PaymentService paymentService;
+    private final UserService userService;
 
     @PostMapping
     public ResponseEntity<ApiResponse> createPayment(@RequestBody Payment payment) {
@@ -22,6 +29,27 @@ public class PaymentController {
                 "Payment initiated successfully", 
                 paymentService.createPayment(payment)
             ));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
+        }
+    }
+
+    @GetMapping
+    public ResponseEntity<ApiResponse> getAllPayments() {
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            String email = authentication.getName();
+            User currentUser = userService.getUserByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+            if ("ADMIN".equals(currentUser.getRole())) {
+                // Admin can view all payments - we use all payments by user ID as a base, or we can use paymentService.getAllPayments() if it exists.
+                return ResponseEntity.ok(ApiResponse.success(
+                    "Success", 
+                    paymentService.getAllPayments()
+                ));
+            }
+            return ResponseEntity.badRequest().body(ApiResponse.error("Unauthorized"));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
         }
@@ -42,9 +70,36 @@ public class PaymentController {
     @GetMapping("/user/{userId}")
     public ResponseEntity<ApiResponse> getPaymentsByUser(@PathVariable Long userId) {
         try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            String email = authentication.getName();
+            User currentUser = userService.getUserByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+            List<Payment> payments = paymentService.getPaymentsByUser(userId);
+
+            if ("FARMER".equals(currentUser.getRole())) {
+                // Farmer can only view received payments
+                payments = payments.stream()
+                        .filter(p -> p.getReceiver() != null && p.getReceiver().getId().equals(currentUser.getId()))
+                        .toList();
+            } else if ("TRANSPORTER".equals(currentUser.getRole())) {
+                // Transporter can only view transport payments
+                payments = payments.stream()
+                        .filter(p -> "TRANSPORT_PAYMENT".equals(p.getPaymentType()) && p.getReceiver() != null && p.getReceiver().getId().equals(currentUser.getId()))
+                        .toList();
+            } else if ("RETAILER".equals(currentUser.getRole())) {
+                // Retailer can view all payments made by them
+                payments = payments.stream()
+                        .filter(p -> p.getPayer() != null && p.getPayer().getId().equals(currentUser.getId()))
+                        .toList();
+            } else if (!"ADMIN".equals(currentUser.getRole()) && !currentUser.getId().equals(userId)) {
+                // Make sure users can't fetch others' payments unless admin
+                throw new RuntimeException("Unauthorized");
+            }
+            
             return ResponseEntity.ok(ApiResponse.success(
                 "Success", 
-                paymentService.getPaymentsByUser(userId)
+                payments
             ));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));

@@ -64,6 +64,17 @@ public class User {
     @Column(name = "otp_expiry")
     private LocalDateTime otpExpiry;
 
+    @Column(name = "total_rating_score")
+    private Double totalRatingScore = 0.0;
+
+    @Column(name = "rating_count")
+    private Integer ratingCount = 0;
+
+    public Double getAverageRating() {
+        if (ratingCount == null || ratingCount == 0) return 0.0;
+        return totalRatingScore / ratingCount;
+    }
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();

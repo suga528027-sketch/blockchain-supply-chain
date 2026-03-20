@@ -8,11 +8,14 @@ import {
 import { userAPI, batchAPI, statsAPI } from '../../services/api';
 import { toast } from 'react-toastify';
 import AnalyticsSection from '../../components/AnalyticsSection';
-import { TrendingUp as TrendingIcon, DollarSign } from 'lucide-react';
+import { TrendingUp as TrendingIcon, DollarSign, CreditCard, Inbox, ShieldCheck, Bell, ChevronRight, Zap, MessageSquare, Star, Send } from 'lucide-react';
+import { paymentAPI, disputeAPI, feedbackAPI } from '../../services/api';
+import NotificationFeed from '../../components/NotificationFeed';
+import { useNavigate } from 'react-router-dom';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Props {
-  initialTab?: 'overview' | 'users' | 'batches';
+  initialTab?: 'overview' | 'users' | 'batches' | 'payments' | 'disputes' | 'feedback';
 }
 
 interface User {
@@ -31,6 +34,8 @@ interface Batch {
   pricePerKg: number;
   qualityGrade: string;
   status: string;
+  farmer?: { id: number; fullName: string };
+  currentOwner?: { id: number; fullName: string; role: string };
 }
 
 interface EditBatchForm {
@@ -39,6 +44,39 @@ interface EditBatchForm {
   pricePerKg: string;
   qualityGrade: string;
   status: string;
+}
+
+interface Payment {
+  id: number;
+  batch: { id: number; batchCode: string; productName: string };
+  payer: { id: number; fullName: string; role: string };
+  receiver: { id: number; fullName: string; role: string };
+  amount: number;
+  paymentStatus: string;
+  paymentType: string;
+  paymentDate: string;
+}
+
+interface Dispute {
+  id: number;
+  batch: { id: number; batchCode: string; productName: string };
+  raisedBy: { id: number; fullName: string; role: string };
+  againstUser?: { id: number; fullName: string; role: string };
+  reason: string;
+  status: string;
+  resolution?: string;
+  createdAt: string;
+}
+
+interface Feedback {
+  id: number;
+  batch: { id: number; batchCode: string; productName: string; farmer: { id: number; fullName: string } };
+  consumer: { id: number; fullName: string };
+  comment: string;
+  rating: number;
+  category: string;
+  isReviewedByAdmin: boolean;
+  createdAt: string;
 }
 
 // ─── UsersView subcomponent (search + role tabs) ─────────────────────────────
@@ -304,11 +342,26 @@ const UsersView: React.FC<{
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 const AdminDashboard: React.FC<Props> = ({ initialTab = 'overview' }) => {
-
-  const [users,   setUsers]   = useState<User[]>([]);
-  const [batches, setBatches] = useState<Batch[]>([]);
-  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+  const [users,      setUsers]      = useState<User[]>([]);
+  const [batches,    setBatches]    = useState<Batch[]>([]);
+  const [payments,   setPayments]   = useState<Payment[]>([]);
+  const [disputes,   setDisputes]   = useState<Dispute[]>([]);
+  const [feedbacks,  setFeedbacks]  = useState<Feedback[]>([]);
+  const [loading,    setLoading]    = useState(true);
   const [adminStats, setAdminStats] = useState<any>(null);
+
+  // Status for review feedback
+  const [reviewFeedbackModal, setReviewFeedbackModal] = useState(false);
+  const [selectedFeedback, setSelectedFeedback] = useState<Feedback | null>(null);
+  const [reviewForm, setReviewForm] = useState({
+    farmerRating: 5,
+    transporterRating: 5,
+    retailerRating: 5
+  });
+  const [reviewLoading, setReviewLoading] = useState(false);
+
+  const [activeView, setActiveView] = useState(initialTab);
 
   // Delete user modal
   const [deleteUserModal,   setDeleteUserModal]   = useState(false);
@@ -326,20 +379,32 @@ const AdminDashboard: React.FC<Props> = ({ initialTab = 'overview' }) => {
     productName: '', quantityKg: '', pricePerKg: '', qualityGrade: '', status: '',
   });
 
+  // Resolve Dispute modal
+  const [resolveModal,        setResolveModal]        = useState(false);
+  const [disputeToResolve,    setDisputeToResolve]    = useState<Dispute | null>(null);
+  const [resolutionText,      setResolutionText]      = useState('');
+  const [resolveLoading,      setResolveLoading]      = useState(false);
+
   // ─── Fetch ──────────────────────────────────────────────────────────────────
   useEffect(() => { fetchData(); }, []);
 
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [usersRes, batchesRes, statsRes] = await Promise.all([
+      const [usersRes, batchesRes, paymentsRes, disputesRes, statsRes, feedbacksRes] = await Promise.all([
         userAPI.getAllUsers(),
         batchAPI.getAllBatches(),
-        statsAPI.getAdminStats()
+        paymentAPI.getAllPayments(),
+        disputeAPI.getAllDisputes(),
+        statsAPI.getAdminStats(),
+        feedbackAPI.getPendingFeedback()
       ]);
       setUsers(usersRes.data.data || []);
       setBatches(batchesRes.data.data || []);
+      setPayments(paymentsRes.data.data || []);
+      setDisputes(disputesRes.data.data || []);
       setAdminStats(statsRes.data.data);
+      setFeedbacks(feedbacksRes.data.data || []);
     } catch {
       toast.error('Failed to fetch data!');
     } finally {
@@ -450,6 +515,49 @@ const AdminDashboard: React.FC<Props> = ({ initialTab = 'overview' }) => {
     }
   };
 
+  const handleResolveDispute = async () => {
+    if (!disputeToResolve || !resolutionText.trim()) {
+      toast.warning("Please provide a resolution detail");
+      return;
+    }
+    setResolveLoading(true);
+    try {
+      await disputeAPI.resolveDispute(disputeToResolve.id, resolutionText);
+      toast.success("Dispute resolved successfully");
+      setResolveModal(false);
+      setDisputeToResolve(null);
+      setResolutionText('');
+      fetchData();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Failed to resolve dispute');
+    } finally {
+      setResolveLoading(false);
+    }
+  };
+
+  const handleReviewFeedback = async () => {
+    if (!selectedFeedback) return;
+    setReviewLoading(true);
+    try {
+      await feedbackAPI.reviewFeedback({
+        feedbackId: selectedFeedback.id,
+        ...reviewForm
+      });
+      toast.success("Feedback reviewed and ratings broadcasted!");
+      setReviewFeedbackModal(false);
+      setSelectedFeedback(null);
+      fetchData();
+    } catch (err: any) {
+        toast.error(err.response?.data?.message || 'Failed to review feedback');
+    } finally {
+        setReviewLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    setActiveView(initialTab);
+  }, [initialTab]);
+
   // ─── Loading ─────────────────────────────────────────────────────────────────
   if (loading) {
     return (
@@ -473,7 +581,7 @@ const AdminDashboard: React.FC<Props> = ({ initialTab = 'overview' }) => {
   // ═══════════════════════════════════════════════════════════════════════════
   // VIEW: OVERVIEW  (/admin-dashboard)
   // ═══════════════════════════════════════════════════════════════════════════
-  if (initialTab === 'overview') {
+  if (activeView === 'overview') {
     return (
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
         {/* Header */}
@@ -592,6 +700,32 @@ const AdminDashboard: React.FC<Props> = ({ initialTab = 'overview' }) => {
             })}
           </div>
         </div>
+
+        {/* ─── Signal Intelligence (Notifications) ─── */}
+        <div className="mt-14 mb-14 px-2">
+            <div className="flex items-center gap-3 mb-8">
+               <div className="p-3 bg-red-500/10 rounded-2xl border border-red-500/20 shadow-lg shadow-red-500/5">
+                 <Bell className="w-7 h-7 text-red-500" />
+               </div>
+               <div>
+                 <h3 className="text-2xl font-black text-white tracking-tight uppercase">Live System Signal Flow</h3>
+                 <p className="text-gray-400 text-[10px] font-black uppercase tracking-[0.2em] opacity-60">Global Categorized Activity Monitor</p>
+               </div>
+               <div className="ml-auto">
+                  <button 
+                    onClick={() => navigate('/notifications')}
+                    className="flex items-center gap-2 px-5 py-2.5 bg-app-card border border-app-border rounded-xl text-[10px] font-black uppercase tracking-widest text-red-400 hover:text-white transition-all shadow-xl shadow-black/20"
+                  >
+                    Signal Archives <ChevronRight className="w-3 h-3" />
+                  </button>
+               </div>
+            </div>
+            
+            <div className="bg-app-card/30 backdrop-blur-2xl border border-app-border/40 rounded-[3rem] p-10 shadow-2xl overflow-hidden relative group">
+               <div className="absolute top-0 right-0 w-96 h-96 bg-red-500/5 blur-[120px] rounded-full pointer-events-none group-hover:bg-red-500/10 transition-colors"></div>
+               <NotificationFeed limit={6} />
+            </div>
+        </div>
       </motion.div>
     );
   }
@@ -599,7 +733,7 @@ const AdminDashboard: React.FC<Props> = ({ initialTab = 'overview' }) => {
   // ═══════════════════════════════════════════════════════════════════════════
   // VIEW: ALL USERS  (/admin-users)
   // ═══════════════════════════════════════════════════════════════════════════
-  if (initialTab === 'users') {
+  if (activeView === 'users') {
     const ROLES = ['ALL', 'FARMER', 'TRANSPORTER', 'RETAILER', 'CONSUMER', 'ADMIN'] as const;
     const roleTabColors: Record<string, string> = {
       ALL:         'from-blue-500 to-indigo-500',
@@ -632,7 +766,8 @@ const AdminDashboard: React.FC<Props> = ({ initialTab = 'overview' }) => {
   // ═══════════════════════════════════════════════════════════════════════════
   // VIEW: ALL BATCHES  (/admin-batches)
   // ═══════════════════════════════════════════════════════════════════════════
-  return (
+  if (activeView === 'batches') {
+    return (
     <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
@@ -795,7 +930,341 @@ const AdminDashboard: React.FC<Props> = ({ initialTab = 'overview' }) => {
         )}
       </AnimatePresence>
     </motion.div>
-  );
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // VIEW: ALL PAYMENTS 
+  // ═══════════════════════════════════════════════════════════════════════════
+  if (activeView === 'payments') {
+    return (
+      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-purple-500/25">
+            <CreditCard className="w-5 h-5 text-white" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold text-white">System Payments</h2>
+            <p className="text-gray-400 text-sm">₹{payments.reduce((s, p) => s + p.amount, 0).toLocaleString()} total volume</p>
+          </div>
+        </div>
+
+        <div className="bg-app-card rounded-2xl border border-app-border overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-app-border bg-white/[0.02]">
+                  <th className="text-left text-gray-400 text-xs font-semibold uppercase tracking-wider p-4">Payer</th>
+                  <th className="text-left text-gray-400 text-xs font-semibold uppercase tracking-wider p-4">Receiver</th>
+                  <th className="text-left text-gray-400 text-xs font-semibold uppercase tracking-wider p-4">Amount</th>
+                  <th className="text-left text-gray-400 text-xs font-semibold uppercase tracking-wider p-4">Type</th>
+                  <th className="text-left text-gray-400 text-xs font-semibold uppercase tracking-wider p-4">Status</th>
+                  <th className="text-left text-gray-400 text-xs font-semibold uppercase tracking-wider p-4">Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                {payments.map((p, i) => (
+                  <tr key={p.id} className="border-b border-white/5 hover:bg-white/5 transition-all">
+                    <td className="p-4">
+                      <p className="text-white text-sm font-medium">{p.payer?.fullName}</p>
+                      <p className="text-[10px] text-gray-500 uppercase">{p.payer?.role}</p>
+                    </td>
+                    <td className="p-4">
+                      <p className="text-white text-sm font-medium">{p.receiver?.fullName}</p>
+                      <p className="text-[10px] text-gray-500 uppercase">{p.receiver?.role}</p>
+                    </td>
+                    <td className="p-4 text-emerald-400 font-bold">₹{p.amount.toLocaleString()}</td>
+                    <td className="p-4 text-xs text-gray-400">{p.paymentType}</td>
+                    <td className="p-4">
+                      <span className={`px-2 py-0.5 rounded-lg text-[10px] font-bold ${
+                        p.paymentStatus === 'COMPLETED' || p.paymentStatus === 'CONFIRMED' ? 'bg-green-500/10 text-green-400' : 'bg-amber-500/10 text-amber-400'
+                      }`}>
+                        {p.paymentStatus}
+                      </span>
+                    </td>
+                    <td className="p-4 text-xs text-gray-500">{new Date(p.paymentDate).toLocaleDateString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </motion.div>
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // VIEW: ALL DISPUTES
+  // ═══════════════════════════════════════════════════════════════════════════
+  if (activeView === 'disputes') {
+    return (
+      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-10 h-10 bg-gradient-to-br from-amber-500 to-red-600 rounded-xl flex items-center justify-center shadow-lg shadow-amber-500/25">
+            <AlertTriangle className="w-5 h-5 text-white" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold text-white">Dispute Center</h2>
+            <p className="text-gray-400 text-sm">{disputes.filter(d => d.status === 'OPEN').length} active disputes</p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 gap-4">
+          {disputes.length === 0 ? (
+            <div className="bg-app-card rounded-2xl border border-app-border p-12 text-center">
+              <ShieldCheck className="w-12 h-12 text-emerald-500/30 mx-auto mb-3" />
+              <p className="text-gray-500 uppercase font-black text-xs tracking-widest">No disputes found</p>
+            </div>
+          ) : (
+            disputes.map((d, i) => (
+              <div key={d.id} className="bg-app-card rounded-2xl border border-app-border p-5 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className={`px-2 py-0.5 rounded text-[10px] font-black tracking-widest ${
+                      d.status === 'OPEN' ? 'bg-red-500/10 text-red-500 border border-red-500/20' : 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20'
+                    }`}>
+                      {d.status}
+                    </span>
+                    <span className="text-green-400 font-mono text-[10px]">#{d.batch?.batchCode}</span>
+                  </div>
+                  <h4 className="text-white font-bold mb-1">{d.reason}</h4>
+                  <div className="flex items-center gap-4 text-xs text-gray-500">
+                    <p>Raised by: <span className="text-white">{d.raisedBy?.fullName}</span> ({d.raisedBy?.role})</p>
+                    {d.againstUser && <p>Against: <span className="text-white">{d.againstUser?.fullName}</span></p>}
+                  </div>
+                  {d.resolution && (
+                    <div className="mt-3 p-3 rounded-xl bg-white/5 border border-white/5">
+                      <p className="text-[10px] text-emerald-400 font-black uppercase tracking-widest mb-1">Resolution Detail</p>
+                      <p className="text-xs text-gray-400">{d.resolution}</p>
+                    </div>
+                  )}
+                </div>
+
+                {d.status === 'OPEN' && (
+                  <button
+                    onClick={() => { setDisputeToResolve(d); setResolveModal(true); }}
+                    className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-green-600 text-white text-xs font-bold shadow-lg shadow-emerald-500/20"
+                  >
+                    <ShieldCheck className="w-4 h-4" /> Resolve
+                  </button>
+                )}
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* Resolve Modal */}
+        <AnimatePresence>
+          {resolveModal && disputeToResolve && (
+            <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[200] p-4">
+              <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-[#1a2f3a] rounded-3xl p-8 max-w-md w-full border border-white/10 shadow-2xl">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-white text-xl font-bold">Resolve Dispute</h3>
+                  <button onClick={() => setResolveModal(false)} className="text-gray-400 hover:text-white">
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+                <p className="text-gray-400 text-sm mb-6">Enter details of the investigation and final resolution.</p>
+                
+                <textarea
+                  value={resolutionText}
+                  onChange={e => setResolutionText(e.target.value)}
+                  placeholder="e.g. Investigation confirms delivery was made but payment was delayed. Notified retailer and payment released."
+                  className="w-full h-32 bg-black/20 border border-white/10 rounded-2xl p-4 text-white text-sm focus:outline-none focus:border-emerald-500 transition-all mb-6 resize-none"
+                />
+
+                <div className="flex gap-3">
+                  <button onClick={() => setResolveModal(false)} className="flex-1 py-3 rounded-xl text-white font-bold bg-white/5 border border-white/10">Cancel</button>
+                  <button
+                    onClick={handleResolveDispute}
+                    disabled={resolveLoading || !resolutionText.trim()}
+                    className="flex-1 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold disabled:opacity-50 transition-colors shadow-lg shadow-emerald-500/20"
+                  >
+                    {resolveLoading ? "Processing..." : "Confirm Resolve"}
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+      </motion.div>
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // VIEW: CONSUMER FEEDBACK  (/admin-feedback)
+  // ═══════════════════════════════════════════════════════════════════════════
+  if (activeView === 'feedback') {
+    return (
+      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
+        {/* Header */}
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-10 h-10 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl flex items-center justify-center shadow-lg shadow-amber-500/25">
+            <MessageSquare className="w-5 h-5 text-white" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold text-white">Consumer Signals</h2>
+            <p className="text-gray-400 text-sm">{feedbacks.length} pending consumer reviews</p>
+          </div>
+        </div>
+
+        {/* Feedback List */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {feedbacks.length === 0 ? (
+            <div className="col-span-2 bg-app-card rounded-[2rem] border border-app-border p-20 text-center">
+              <Zap className="w-16 h-16 text-amber-500/20 mx-auto mb-4 animate-pulse" />
+              <p className="text-gray-500 font-black text-xs uppercase tracking-widest">No pending feedback signals detected</p>
+            </div>
+          ) : (
+            feedbacks.map((f) => (
+              <motion.div
+                key={f.id}
+                whileHover={{ y: -4 }}
+                className="bg-app-card rounded-[2rem] border border-app-border p-6 shadow-xl relative overflow-hidden group"
+              >
+                <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 blur-3xl pointer-events-none rounded-full" />
+                
+                <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400 font-mono">#{f.batch?.batchCode}</span>
+                      <span className="w-1 h-1 bg-white/20 rounded-full" />
+                      <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md ${
+                        f.category === 'PRODUCT_QUALITY' ? 'bg-rose-500/10 text-rose-500 border border-rose-500/20' :
+                        f.category === 'DELIVERY_EXPERIENCE' ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20' :
+                        f.category === 'POSITIVE_FEEDBACK' ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' :
+                        'bg-blue-500/10 text-blue-500 border border-blue-500/20'
+                      }`}>
+                        {f.category?.replace(/_/g, ' ') || 'GENERAL'}
+                      </span>
+                    </div>
+                    <h4 className="text-white font-black text-lg tracking-tight">{f.batch?.productName}</h4>
+                  </div>
+                  <div className="flex gap-1">
+                    {[1, 2, 3, 4, 5].map((s) => (
+                      <Star key={s} className={`w-3.5 h-3.5 ${s <= f.rating ? 'text-amber-500 fill-amber-500' : 'text-gray-600'}`} />
+                    ))}
+                  </div>
+                </div>
+
+                <div className="bg-app-bg/50 rounded-2xl p-4 border border-app-border/10 mb-6">
+                  <p className="text-gray-400 text-sm font-medium italic leading-relaxed">"{f.comment}"</p>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center text-[10px] font-black text-blue-400 border border-blue-500/20">
+                      {f.consumer?.fullName.charAt(0)}
+                    </div>
+                    <div>
+                      <p className="text-gray-500 text-[9px] font-black uppercase tracking-widest leading-none">CONSUMER</p>
+                      <p className="text-white text-xs font-bold">{f.consumer?.fullName}</p>
+                    </div>
+                  </div>
+                  <span className="text-[9px] text-gray-500 font-bold opacity-40">{new Date(f.createdAt).toLocaleDateString()}</span>
+
+                  <button
+                    onClick={() => { setSelectedFeedback(f); setReviewFeedbackModal(true); }}
+                    className="px-5 py-2.5 bg-amber-500/10 hover:bg-amber-500 text-amber-500 hover:text-white rounded-xl text-[10px] font-black uppercase tracking-widest border border-amber-500/20 transition-all shadow-lg shadow-amber-500/5"
+                  >
+                    Assess & Rate Hubs
+                  </button>
+                </div>
+              </motion.div>
+            ))
+          )}
+        </div>
+
+        {/* Feedback Review Modal */}
+        <AnimatePresence>
+          {reviewFeedbackModal && selectedFeedback && (
+            <div className="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center z-[250] p-4">
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                className="bg-[#0c1a22] rounded-[3rem] p-10 max-w-xl w-full border border-app-border shadow-2xl relative overflow-hidden"
+              >
+                <div className="absolute -top-20 -right-20 w-64 h-64 bg-amber-500/10 blur-[100px] rounded-full pointer-events-none" />
+                
+                <div className="flex items-center justify-between mb-8">
+                   <div className="flex items-center gap-4">
+                     <div className="p-3 bg-amber-500/10 rounded-2xl border border-amber-500/30 shadow-lg shadow-amber-500/5">
+                        <Star className="w-6 h-6 text-amber-500" />
+                     </div>
+                     <div>
+                       <h3 className="text-white text-2xl font-black tracking-tight italic uppercase">Ecosystem Rating Hub</h3>
+                       <p className="text-gray-500 text-[10px] font-black uppercase tracking-widest opacity-50">Calibrating Hub performance scores</p>
+                     </div>
+                   </div>
+                   <button onClick={() => setReviewFeedbackModal(false)} className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-gray-400 hover:text-white transition-colors">
+                     <X className="w-5 h-5" />
+                   </button>
+                </div>
+
+                <div className="grid grid-cols-1 gap-6 mb-10">
+                  {/* Farmer Rating */}
+                  <div className="bg-app-card/50 rounded-2xl p-5 border border-app-border">
+                    <div className="flex justify-between items-center mb-4">
+                       <p className="text-xs font-black uppercase tracking-widest text-green-500">Farmer: {selectedFeedback.batch.farmer.fullName}</p>
+                       <p className="text-white font-black">{reviewForm.farmerRating}/5</p>
+                    </div>
+                    <input
+                      type="range" min="1" max="5" step="0.5"
+                      value={reviewForm.farmerRating}
+                      onChange={e => setReviewForm(prev => ({...prev, farmerRating: parseFloat(e.target.value)}))}
+                      className="w-full h-1.5 bg-white/5 rounded-lg appearance-none cursor-pointer accent-green-500"
+                    />
+                  </div>
+
+                  {/* Transporter Rating */}
+                  <div className="bg-app-card/50 rounded-2xl p-5 border border-app-border">
+                    <div className="flex justify-between items-center mb-4">
+                       <p className="text-xs font-black uppercase tracking-widest text-amber-500">Logistics Rating</p>
+                       <p className="text-white font-black">{reviewForm.transporterRating}/5</p>
+                    </div>
+                    <input
+                      type="range" min="1" max="5" step="0.5"
+                      value={reviewForm.transporterRating}
+                      onChange={e => setReviewForm(prev => ({...prev, transporterRating: parseFloat(e.target.value)}))}
+                      className="w-full h-1.5 bg-white/5 rounded-lg appearance-none cursor-pointer accent-amber-500"
+                    />
+                  </div>
+
+                  {/* Retailer Rating */}
+                  <div className="bg-app-card/50 rounded-2xl p-5 border border-app-border">
+                    <div className="flex justify-between items-center mb-4">
+                       <p className="text-xs font-black uppercase tracking-widest text-blue-500">Retail Quality Rating</p>
+                       <p className="text-white font-black">{reviewForm.retailerRating}/5</p>
+                    </div>
+                    <input
+                      type="range" min="1" max="5" step="0.5"
+                      value={reviewForm.retailerRating}
+                      onChange={e => setReviewForm(prev => ({...prev, retailerRating: parseFloat(e.target.value)}))}
+                      className="w-full h-1.5 bg-white/5 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex gap-4">
+                  <button onClick={() => setReviewFeedbackModal(false)} className="flex-1 py-4 bg-white/5 text-gray-400 font-black uppercase tracking-widest text-[10px] rounded-2xl border border-white/5 hover:bg-white/10 transition-all">Abort Review</button>
+                  <button
+                    onClick={handleReviewFeedback}
+                    disabled={reviewLoading}
+                    className="flex-1 py-4 bg-gradient-to-r from-amber-500 to-orange-600 text-white font-black uppercase tracking-widest text-[10px] rounded-2xl shadow-[0_10px_30px_-5px_rgba(245,158,11,0.3)] hover:shadow-amber-500/50 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    {reviewLoading ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> : <><Send className="w-4 h-4" /> Finalize Signal</>}
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+      </motion.div>
+    );
+  }
+
+  return null;
 };
 
 export default AdminDashboard;

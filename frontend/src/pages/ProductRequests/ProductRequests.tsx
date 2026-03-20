@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Inbox, Send, CheckCircle, XCircle, Clock,
-  User, Package, MessageSquare, AlertCircle, Loader2, ArrowRight, DollarSign
+  User, Package, MessageSquare, AlertCircle, Loader2, ArrowRight, DollarSign, Truck
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { productRequestAPI } from '../../services/api';
+import { productRequestAPI, paymentAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from 'react-toastify';
 
@@ -14,6 +14,7 @@ interface ProductRequest {
   requester: { id: number; fullName: string; role: string; email: string };
   batch: { id: number; batchCode: string; productName: string };
   owner: { id: number; fullName: string; role: string; email: string };
+  transporter: { id: number; fullName: string; role: string } | null;
   quantityRequested: number;
   message: string;
   status: 'PENDING' | 'ACCEPTED' | 'REJECTED';
@@ -53,10 +54,10 @@ const ProductRequests: React.FC = () => {
   const updateStatus = async (requestId: number, newStatus: 'ACCEPTED' | 'REJECTED') => {
     try {
       await productRequestAPI.updateRequestStatus(requestId, newStatus);
-      toast.success(`Request ${newStatus.toLowerCase()}!`);
+      toast.success(newStatus === 'ACCEPTED' ? 'Trade accepted! Awaiting retailer settlement.' : `Request ${newStatus.toLowerCase()}!`);
       fetchRequests();
     } catch (err) {
-      toast.error('Failed to update status');
+      toast.error('Failed to process request update');
     }
   };
 
@@ -100,8 +101,8 @@ const ProductRequests: React.FC = () => {
             <motion.div layoutId="requestTypePill" className="absolute inset-0 bg-emerald-500 rounded-full shadow-[0_10px_25px_rgba(16,185,129,0.3)]" />
           )}
           <span className="relative z-10 flex items-center gap-2.5">
-            <Inbox className="w-4 h-4" />
-            Node Inbound
+          <Inbox className="w-5 h-5" />
+          Registry Inbound
             {receivedRequests.filter(r => r.status === 'PENDING').length > 0 && (
               <span className="bg-app-text text-app-bg text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-black">
                 {receivedRequests.filter(r => r.status === 'PENDING').length}
@@ -119,8 +120,8 @@ const ProductRequests: React.FC = () => {
             <motion.div layoutId="requestTypePill" className="absolute inset-0 bg-emerald-500 rounded-full shadow-[0_10px_25px_rgba(16,185,129,0.3)]" />
           )}
           <span className="relative z-10 flex items-center gap-2.5">
-            <Send className="w-4 h-4" />
-            Node Outbound
+            <Send className="w-5 h-5" />
+            Registry Outbound
           </span>
         </button>
       </div>
@@ -143,12 +144,12 @@ const ProductRequests: React.FC = () => {
                 transition={{ delay: idx * 0.05 }}
                 className="bg-app-card backdrop-blur-3xl p-1 rounded-[3rem] border border-app-border hover:border-emerald-500/30 transition-all group shadow-xl shadow-black/5"
               >
-                <div className="bg-app-bg/10 rounded-[2.8rem] p-8">
+                <div className="bg-app-bg/40 rounded-[2.8rem] p-8">
                   <div className="flex flex-col lg:flex-row gap-8 lg:items-center">
                     {/* Visual Asset & Info */}
                     <div className="flex-1">
                       <div className="flex items-center gap-5 mb-6">
-                        <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center border border-white/10 shadow-inner group-hover:border-emerald-500/30 transition-colors">
+                        <div className="w-16 h-16 bg-app-bg rounded-2xl flex items-center justify-center border border-app-border shadow-inner group-hover:border-emerald-500/30 transition-colors">
                           <Package className="w-8 h-8 text-emerald-400" />
                         </div>
                         <div>
@@ -163,12 +164,16 @@ const ProductRequests: React.FC = () => {
                             <p className="text-[10px] text-app-text-muted font-black uppercase tracking-widest mb-1.5">Trade Volume</p>
                             <p className="text-app-text font-black text-xl italic">{req.quantityRequested} <span className="text-xs text-app-text-secondary font-bold not-italic">KG</span></p>
                          </div>
-                         <div className="h-10 w-px bg-white/5"></div>
+                         <div className="h-10 w-px bg-app-border/20"></div>
                          <div>
                             <p className="text-[10px] text-app-text-muted font-black uppercase tracking-widest mb-1.5">Status Flag</p>
                             <div className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.1em] border ${getStatusStyle(req.status)} shadow-[0_5px_15px_rgba(0,0,0,0.2)] flex items-center gap-2`}>
-                               <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${req.status === 'PENDING' ? 'bg-amber-400' : req.status === 'ACCEPTED' ? 'bg-emerald-400' : 'bg-red-400'}`}></div>
-                               {req.status}
+                               <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${
+                                 req.status === 'PENDING' ? 'bg-amber-400' : 
+                                 (req.status === 'ACCEPTED' && !req.isPaid) ? 'bg-blue-400' :
+                                 req.status === 'ACCEPTED' ? 'bg-emerald-400' : 'bg-red-400'
+                               }`}></div>
+                               {req.status === 'ACCEPTED' && !req.isPaid ? 'AWAITING PAYMENT' : req.status}
                             </div>
                          </div>
                       </div>
@@ -176,22 +181,37 @@ const ProductRequests: React.FC = () => {
 
                     {/* Meta Section */}
                      <div className="flex-[1.8] flex flex-col md:flex-row gap-8">
-                       <div className="flex-1 space-y-3">
-                          <label className="text-[10px] font-black uppercase tracking-widest text-app-text-muted block pl-1">{activeTab === 'received' ? 'Requester Node' : 'Owner Node'}</label>
-                          <div className="p-4 rounded-2xl bg-black/5 border border-white/5 flex items-center gap-4">
-                             <div className="w-12 h-12 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-400 font-black border border-emerald-500/20">
-                                {(activeTab === 'received' ? req.requester.fullName : req.owner.fullName).charAt(0)}
-                             </div>
-                             <div>
-                                <p className="text-app-text text-sm font-bold truncate">{(activeTab === 'received' ? req.requester.fullName : req.owner.fullName)}</p>
-                                <p className="text-[10px] text-emerald-500 font-black uppercase tracking-tight">{(activeTab === 'received' ? req.requester.role : req.owner.role)}</p>
-                             </div>
+                        <div className="flex-1 space-y-3">
+                           <label className="text-[10px] font-black uppercase tracking-widest text-app-text-muted block pl-1">{activeTab === 'received' ? 'Requester Node' : 'Owner Node'}</label>
+                           <div className="p-4 rounded-2xl bg-app-bg/50 border border-app-border/10 flex items-center gap-4">
+                              <div className="w-12 h-12 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-400 font-black border border-emerald-500/20">
+                                 {(activeTab === 'received' ? req.requester.fullName : req.owner.fullName).charAt(0)}
+                              </div>
+                              <div>
+                                 <p className="text-app-text text-sm font-bold truncate">{(activeTab === 'received' ? req.requester.fullName : req.owner.fullName)}</p>
+                                 <p className="text-[10px] text-emerald-500 font-black uppercase tracking-tight">{(activeTab === 'received' ? req.requester.role : req.owner.role)}</p>
+                              </div>
+                           </div>
+                        </div>
+
+                        {req.transporter && (
+                          <div className="flex-1 space-y-3">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-app-text-muted block pl-1">Assigned Logistics</label>
+                            <div className="p-4 rounded-2xl bg-blue-500/5 border border-blue-500/10 flex items-center gap-4">
+                               <div className="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-400 font-black border border-blue-500/20">
+                                  <Truck className="w-5 h-5" />
+                               </div>
+                               <div>
+                                  <p className="text-app-text text-sm font-bold truncate">{req.transporter.fullName}</p>
+                                  <p className="text-[10px] text-blue-500 font-black uppercase tracking-tight">Transporter</p>
+                               </div>
+                            </div>
                           </div>
-                       </div>
+                        )}
 
                        <div className="flex-[1.5] space-y-3">
                           <label className="text-[10px] font-black uppercase tracking-widest text-app-text-muted block pl-1">Transmission Message</label>
-                          <div className="p-4 rounded-2xl bg-black/5 border border-white/5 h-full">
+                          <div className="p-4 rounded-2xl bg-app-bg/50 border border-app-border/10 h-full">
                              <p className="text-app-text-secondary text-xs italic font-medium leading-relaxed opacity-70">
                                 "{req.message || 'No additional parameters provided in transmission.'}"
                              </p>
@@ -245,7 +265,7 @@ const ProductRequests: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="mt-8 pt-6 border-t border-white/5 flex flex-wrap items-center justify-between gap-4">
+                  <div className="mt-8 pt-6 border-t border-app-border/10 flex flex-wrap items-center justify-between gap-4">
                     <div className="flex items-center gap-6">
                        <span className="text-[10px] text-app-text-muted font-black uppercase tracking-[0.3em]">ID: {req.id}</span>
                        {req.totalPrice && (

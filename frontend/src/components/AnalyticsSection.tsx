@@ -33,10 +33,10 @@ const AnalyticsSection: React.FC<AnalyticsSectionProps> = ({
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          {icon && <div className="p-2 bg-white/5 rounded-lg text-green-500">{icon}</div>}
+          {icon && <div className="p-2 bg-app-bg rounded-lg text-emerald-500 border border-app-border">{icon}</div>}
           <div>
-            <h3 className="text-lg font-bold text-white">{title}</h3>
-            <p className="text-sm text-gray-400">{subtitle}</p>
+            <h3 className="text-lg font-black text-app-text tracking-tight italic">{title}</h3>
+            <p className="text-xs text-app-text-muted font-bold tracking-tight">{subtitle}</p>
           </div>
         </div>
         <div className="flex items-center gap-2 px-3 py-1 bg-green-500/10 text-green-400 rounded-full text-xs font-bold border border-green-500/20">
@@ -45,83 +45,96 @@ const AnalyticsSection: React.FC<AnalyticsSectionProps> = ({
         </div>
       </div>
 
-      <div className="h-[300px] w-full mt-4">
-        <ResponsiveContainer width="100%" height="100%">
-          {type === 'area' ? (
-            <AreaChart data={data}>
-              <defs>
-                <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor={color} stopOpacity={0.3}/>
-                  <stop offset="95%" stopColor={color} stopOpacity={0}/>
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" vertical={false} />
-              <XAxis 
-                dataKey="label" 
-                stroke="#94a3b8" 
-                fontSize={12} 
-                tickLine={false} 
-                axisLine={false}
-              />
-              <YAxis 
-                stroke="#94a3b8" 
-                fontSize={12} 
-                tickLine={false} 
-                axisLine={false}
-                tickFormatter={formatter}
-              />
-              <Tooltip 
-                contentStyle={{ 
-                  backgroundColor: '#0F2027', 
-                  borderColor: '#ffffff10',
-                  borderRadius: '12px',
-                  color: '#fff' 
-                }}
-                itemStyle={{ color: color }}
-              />
-              <Area 
-                type="monotone" 
-                dataKey="value" 
-                stroke={color} 
-                fillOpacity={1} 
-                fill="url(#colorValue)" 
-                strokeWidth={3}
-              />
-            </AreaChart>
-          ) : (
-            <BarChart data={data}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" vertical={false} />
-              <XAxis 
-                dataKey="label" 
-                stroke="#94a3b8" 
-                fontSize={12} 
-                tickLine={false} 
-                axisLine={false}
-              />
-              <YAxis 
-                stroke="#94a3b8" 
-                fontSize={12} 
-                tickLine={false} 
-                axisLine={false}
-                tickFormatter={formatter}
-              />
-              <Tooltip 
-                cursor={{ fill: '#ffffff05' }}
-                contentStyle={{ 
-                  backgroundColor: '#0F2027', 
-                  borderColor: '#ffffff10',
-                  borderRadius: '12px'
-                }}
-              />
-              <Bar 
-                dataKey="value" 
-                fill={color} 
-                radius={[6, 6, 0, 0]}
-                barSize={40}
-              />
-            </BarChart>
-          )}
-        </ResponsiveContainer>
+      <div className="h-[300px] w-full mt-4 relative min-w-0">
+        <div className="absolute inset-0">
+          <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} debounce={50}>
+            {type === 'area' ? (
+              <AreaChart data={data}>
+                <defs>
+                  <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor={color} stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor={color} stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="currentColor" opacity={0.1} vertical={false} />
+                <XAxis 
+                  dataKey="label" 
+                  stroke="currentColor" 
+                  fontSize={10} 
+                  tickLine={false} 
+                  axisLine={false}
+                  tick={{ fill: 'currentColor', opacity: 0.6 }}
+                />
+                <YAxis 
+                  stroke="currentColor" 
+                  fontSize={10} 
+                  tickLine={false} 
+                  axisLine={false}
+                  tickFormatter={formatter}
+                  tick={{ fill: 'currentColor', opacity: 0.6 }}
+                />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: '#1a2f3a', 
+                    borderColor: 'rgba(255,255,255,0.1)',
+                    borderRadius: '16px',
+                    color: '#fff',
+                    fontWeight: '900',
+                    boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
+                    border: '1px solid rgba(255,255,255,0.1)'
+                  }}
+                  itemStyle={{ color: color }}
+                />
+                <Area 
+                  type="monotone" 
+                  dataKey="value" 
+                  stroke={color} 
+                  fillOpacity={1} 
+                  fill="url(#colorValue)" 
+                  strokeWidth={3}
+                />
+              </AreaChart>
+            ) : (
+              <BarChart data={data}>
+                <CartesianGrid strokeDasharray="3 3" stroke="currentColor" opacity={0.1} vertical={false} />
+                <XAxis 
+                  dataKey="label" 
+                  stroke="currentColor" 
+                  fontSize={10} 
+                  tickLine={false} 
+                  axisLine={false}
+                  tick={{ fill: 'currentColor', opacity: 0.6 }}
+                />
+                <YAxis 
+                  stroke="currentColor" 
+                  fontSize={10} 
+                  tickLine={false} 
+                  axisLine={false}
+                  tickFormatter={formatter}
+                  tick={{ fill: 'currentColor', opacity: 0.6 }}
+                />
+                <Tooltip 
+                  cursor={{ fill: 'currentColor', opacity: 0.05 }}
+                  contentStyle={{ 
+                    backgroundColor: '#1a2f3a', 
+                    borderColor: 'rgba(255,255,255,0.1)',
+                    borderRadius: '16px',
+                    color: '#fff',
+                    fontWeight: '900',
+                    boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
+                    border: '1px solid rgba(255,255,255,0.1)'
+                  }}
+                />
+                <Bar 
+                  dataKey="value" 
+                  fill={color} 
+                  radius={[6, 6, 0, 0]}
+                  barSize={40}
+                />
+              </BarChart>
+            )}
+          </ResponsiveContainer>
+        </div>
       </div>
     </motion.div>
   );

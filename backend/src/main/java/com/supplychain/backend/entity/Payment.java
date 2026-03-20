@@ -58,6 +58,9 @@ public class Payment {
     @Column(name = "payment_status")
     private String paymentStatus = "PENDING";
 
+    @Column(name = "payment_type")
+    private String paymentType;
+
     @Column(name = "blockchain_tx_hash")
     private String blockchainTxHash;
 

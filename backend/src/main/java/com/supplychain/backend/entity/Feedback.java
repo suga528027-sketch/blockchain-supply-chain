@@ -16,34 +16,35 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "notifications")
+@Table(name = "feedbacks")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Notification {
+public class Feedback {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne
-    @JoinColumn(name = "user_id")
-    private User user;
+    @JoinColumn(name = "batch_id")
+    private Batch batch;
 
-    @Column(name = "title")
-    private String title;
+    @ManyToOne
+    @JoinColumn(name = "consumer_id")
+    private User consumer;
 
-    @Column(name = "message")
-    private String message;
+    @Column(name = "comment", nullable = false)
+    private String comment;
 
-    @Column(name = "type")
-    private String type = "INFO"; // INFO, SUCCESS, WARNING, ERROR
+    @Column(name = "rating")
+    private Integer rating; // Consumer's rating for the product (1-5)
 
     @Column(name = "category")
-    private String category = "SYSTEM"; // REQUEST, PAYMENT, LOGISTICS, SYSTEM
+    private String category; // e.g. "PRODUCT_QUALITY", "DELIVERY_EXPERIENCE", "GENERAL"
 
-    @Column(name = "is_read")
-    private Boolean isRead = false;
+    @Column(name = "is_reviewed_by_admin")
+    private Boolean isReviewedByAdmin = false;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;

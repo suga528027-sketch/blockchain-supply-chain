@@ -154,6 +154,12 @@ export const productRequestAPI = {
   getReceivedRequests: (userId: number) =>
     api.get(`/requests/received/${userId}`),
 
+  getTransporterRequests: (userId: number) =>
+    api.get(`/requests/transporter/${userId}`),
+
+  getRequestById: (id: number) =>
+    api.get(`/requests/${id}`),
+
   updateRequestStatus: (id: number, status: string) =>
     api.put(`/requests/${id}/status`, null, { params: { status } }),
 };
@@ -176,6 +182,39 @@ export const paymentAPI = {
 
   confirmPayment: (id: number) =>
     api.put(`/payment/${id}/confirm`),
+
+  getAllPayments: () =>
+    api.get('/payment'),
+};
+
+// Dispute APIs
+export const disputeAPI = {
+  getAllDisputes: () =>
+    api.get('/dispute'),
+
+  resolveDispute: (id: number, resolution: string) =>
+    api.put(`/dispute/${id}/resolve`, { resolution }),
+
+  createDispute: (data: any) =>
+    api.post('/dispute', data),
+
+  getDisputesByUser: (userId: number) =>
+    api.get(`/dispute/user/${userId}`),
+};
+
+// Feedback APIs
+export const feedbackAPI = {
+  submitFeedback: (data: any) =>
+    api.post('/feedback/submit', data),
+
+  getFeedbackByConsumer: (consumerId: number) =>
+    api.get(`/feedback/consumer/${consumerId}`),
+
+  getPendingFeedback: () =>
+    api.get('/feedback/pending'),
+
+  reviewFeedback: (data: any) =>
+    api.put('/feedback/review', data),
 };
 
 export default api;
