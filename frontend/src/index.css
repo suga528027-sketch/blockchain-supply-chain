@@ -27,7 +27,7 @@
   .pink {
     --bg-color: #fafbfc;
     --text-color: #1a1a1a;
-    --text-secondary: #4b5563; 
+    --text-secondary: #4b5563;
     --text-muted: #9ca3af;
     --card-bg: #ffffff;
     --border-color: rgba(0, 0, 0, 0.04);
@@ -67,14 +67,17 @@
 .custom-scrollbar::-webkit-scrollbar {
   width: 6px;
 }
+
 .custom-scrollbar::-webkit-scrollbar-track {
   background: var(--card-bg);
   border-radius: 4px;
 }
+
 .custom-scrollbar::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.1);
   border-radius: 4px;
 }
+
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.2);
 }
