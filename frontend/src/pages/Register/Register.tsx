@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Leaf, Lock, Mail, Eye, EyeOff, User, Phone, MapPin, Shield } from 'lucide-react';
+import { Lock, Mail, Eye, EyeOff, User, Phone, MapPin, Shield } from 'lucide-react';
 import { authAPI } from '../../services/api';
 import { useTheme } from '../../context/ThemeContext';
 import { toast } from 'react-toastify';
+import { APP_NAME } from '../../branding';
+import BrandMark from '../../components/BrandMark';
 
 const Register: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -66,11 +68,11 @@ const Register: React.FC = () => {
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ delay: 0.2, type: 'spring' }}
-              className="w-16 h-16 bg-gradient-to-br from-green-400 to-green-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg"
+              className="mb-4"
             >
-              <Leaf className="w-8 h-8 text-white" />
+              <BrandMark className="w-16 h-16" iconClassName="w-8 h-8" />
             </motion.div>
-             <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Join AgriChain</h1>
+             <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Join {APP_NAME}</h1>
             <p className="text-slate-500 dark:text-gray-400 text-sm mt-1">Create your account</p>
           </div>
 

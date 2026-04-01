@@ -24,15 +24,16 @@ import Help from './pages/Help/Help';
 
 // Components
 import Layout from './components/Layout';
+import { APP_NAME } from './branding';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0F2027] flex items-center justify-center transition-colors duration-500">
+        <div className="min-h-screen bg-[#0F2027] flex items-center justify-center transition-colors duration-500">
         <div className="flex flex-col items-center gap-4">
           <div className="w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
-          <p className="text-white text-lg font-black tracking-tight uppercase opacity-50">Initializing AgriChain...</p>
+          <p className="text-white text-lg font-black tracking-tight uppercase opacity-50">Initializing {APP_NAME}...</p>
         </div>
       </div>
     );
@@ -64,7 +65,7 @@ const AppContent: React.FC = () => {
 
           {/* Core App Routes */}
           <Route path="/dashboard" element={<ProtectedRoute><DashboardRedirect /></ProtectedRoute>} />
-          
+
           <Route path="/payments" element={<ProtectedRoute><Layout><PaymentPage /></Layout></ProtectedRoute>} />
           <Route path="/disputes" element={<ProtectedRoute><Layout><DisputesPage /></Layout></ProtectedRoute>} />
           <Route path="/notifications" element={<ProtectedRoute><Layout><Notifications /></Layout></ProtectedRoute>} />
@@ -79,10 +80,10 @@ const AppContent: React.FC = () => {
           {/* Role Specific Dashboards */}
           <Route path="/farmer-dashboard" element={<ProtectedRoute><Layout><FarmerDashboard /></Layout></ProtectedRoute>} />
           <Route path="/farmer-batches" element={<ProtectedRoute><Layout><FarmerDashboard /></Layout></ProtectedRoute>} />
-          
+
           <Route path="/transporter-dashboard" element={<ProtectedRoute><Layout><TransporterDashboard /></Layout></ProtectedRoute>} />
           <Route path="/retailer-dashboard" element={<ProtectedRoute><Layout><RetailerDashboard /></Layout></ProtectedRoute>} />
-          
+
           {/* Admin Routes */}
           <Route path="/admin-dashboard" element={<ProtectedRoute><Layout><AdminDashboard initialTab="overview" /></Layout></ProtectedRoute>} />
           <Route path="/admin-users" element={<ProtectedRoute><Layout><AdminDashboard initialTab="users" /></Layout></ProtectedRoute>} />

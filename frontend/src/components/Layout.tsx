@@ -2,41 +2,30 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
-  Leaf,
   LayoutDashboard,
   Package,
   Search,
-  LogOut,
-  User,
   Menu,
-  X,
   Users,
   MapPin,
-  Sun,
-  Moon,
   Sparkles,
-  Bell,
-  ShoppingCart,
   Inbox,
   CreditCard,
-  Truck,
-  Store,
   AlertTriangle,
   DollarSign,
-  QrCode,
   PackageCheck,
   MessageSquare
 } from 'lucide-react';
 
 import { useAuth } from '../context/AuthContext';
-import { useTheme } from '../context/ThemeContext';
 import { notificationAPI } from '../services/api';
+import { APP_NAME, APP_PROTOCOL_LABEL, APP_TAGLINE } from '../branding';
 
 import UserProfile from './UserProfile';
+import BrandMark from './BrandMark';
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
-  const { theme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -209,9 +198,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       >
         {/* Logo */}
         <div className="p-6 flex items-center gap-4 border-b border-app-border">
-          <div className="w-12 h-12 min-w-[48px] bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-500/20">
-            <Leaf className="w-6 h-6 text-white" />
-          </div>
+          <BrandMark className="w-12 h-12 min-w-[48px]" iconClassName="w-6 h-6" />
 
           {sidebarOpen && (
             <motion.div
@@ -219,8 +206,8 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.1 }}
             >
-              <h1 className="font-black text-xl tracking-tighter text-app-text">AgriChain</h1>
-              <p className="text-emerald-500 text-[10px] font-black uppercase tracking-[0.2em]">Ecosystem</p>
+              <h1 className="font-black text-xl tracking-tighter text-app-text">{APP_NAME}</h1>
+              <p className="text-emerald-500 text-[10px] font-black uppercase tracking-[0.2em]">{APP_TAGLINE}</p>
             </motion.div>
           )}
         </div>
@@ -327,7 +314,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
               <h2 className="text-app-text-muted text-xs font-black uppercase tracking-[0.2em] mb-1">Current Node</h2>
               <div className="flex items-center gap-2">
                  <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
-                 <span className="text-app-text font-bold text-sm">AgriChain Protocol v1.4.2</span>
+                 <span className="text-app-text font-bold text-sm">{APP_PROTOCOL_LABEL}</span>
               </div>
             </div>
           </div>

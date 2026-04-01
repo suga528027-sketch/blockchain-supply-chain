@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Leaf, Lock, Mail, Eye, EyeOff, Shield, Globe, Cpu, Database, Activity, ArrowRight, UserPlus } from 'lucide-react';
+import { Lock, Mail, Eye, EyeOff, Shield, Globe, Cpu, Database, Activity, ArrowRight } from 'lucide-react';
 import { authAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
-import { useTheme } from '../../context/ThemeContext';
 import { toast } from 'react-toastify';
 import { GoogleLogin } from '@react-oauth/google';
+import { APP_DESCRIPTION, APP_NAME } from '../../branding';
+import BrandMark from '../../components/BrandMark';
 
 const Login: React.FC = () => {
     const [email, setEmail] = useState('');
@@ -18,7 +19,6 @@ const Login: React.FC = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const { login, googleLogin } = useAuth();
-    const { theme } = useTheme();
     const navigate = useNavigate();
 
     const handleLogin = async (e: React.FormEvent) => {
@@ -138,17 +138,15 @@ const Login: React.FC = () => {
                         transition={{ duration: 0.8 }}
                     >
                         <div className="flex items-center gap-4 mb-4">
-                            <div className="w-12 h-12 bg-emerald-500/20 rounded-xl flex items-center justify-center border border-emerald-500/30 backdrop-blur-xl">
-                                <Leaf className="w-7 h-7 text-emerald-400" />
-                            </div>
-                            <h3 className="text-slate-400 font-bold tracking-[0.3em] text-sm uppercase">Secure Ecosystem</h3>
+                            <BrandMark className="w-12 h-12 border border-emerald-500/30" iconClassName="w-7 h-7" />
+                            <h3 className="text-slate-400 font-bold tracking-[0.3em] text-sm uppercase">{APP_NAME}</h3>
                         </div>
                         <h1 className="text-7xl font-black text-white leading-tight">
                             The New Standard <br />
                             <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-cyan-400 to-emerald-500">of Trust.</span>
                         </h1>
                         <p className="text-slate-400 text-lg max-w-lg mt-6 leading-relaxed">
-                            AgriChain leverages decentralized ledger technology to bring unprecedented transparency to the global agricultural marketplace.
+                            {APP_DESCRIPTION}
                         </p>
                     </motion.div>
 
